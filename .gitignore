@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+state.json
+carhunt.log
+carhunt.log.*.bak
+launchd.out
+launchd.err
+deals.html
