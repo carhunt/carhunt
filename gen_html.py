@@ -2,6 +2,7 @@
 """Render the current carhunt matches as a browsable, scored HTML page."""
 import html
 import json
+import os
 import sys
 from datetime import datetime
 
@@ -11,7 +12,9 @@ import score as sc
 # argv may belong to carhunt (which imports this module), so only take a real
 # path, never a flag
 _args = [a for a in sys.argv[1:] if not a.startswith("-")]
-OUT = _args[0] if _args else "/Users/rp/car-hunt/deals.html"
+# resolve beside this file, so the cloud checkout works the same as the Mac
+OUT = _args[0] if _args else os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "deals.html")
 
 CSS = """
 :root{
