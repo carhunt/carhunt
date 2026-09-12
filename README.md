@@ -10,14 +10,39 @@ python3 carhunt.py            # fetch, diff, report changes
 python3 carhunt.py --all      # print every current match
 python3 carhunt.py --debug    # per-source scanned/matched counts and failures
 python3 carhunt.py --html     # also regenerate deals.html from the same fetch
+./refresh.sh                  # what launchd runs: refresh, check, commit, push
 python3 gen_html.py           # page only, fetching independently
 tail -f carhunt.log
 ```
 
-The scheduled job runs `carhunt.py --html`, so each cycle hits every portal
-once and both the diff and the page come out of that single fetch. Running
-`gen_html.py` standalone re-fetches, which is why the launchd job does not use
-it. `deals.html` is published as an artifact - republish it to push the update.
+## How the two halves fit together
+
+Scraping has to happen on the Mac. The Claude cloud sandbox routes all traffic
+through a proxy that allowlists github.com and pypi.org and refuses every car
+portal (`curl` exit 56, connection reset before any HTTP response), so a cloud
+agent cannot fetch listings. The work is split accordingly:
+
+| Where | What | How often |
+|---|---|---|
+| Mac, launchd | `refresh.sh` - scrape, score, render, sanity-check, commit and push `deals.html` | every 2h |
+| Cloud routine | clone, re-verify, read the live artifact, publish only if changed | every 4h |
+
+`refresh.sh` runs `carhunt.py --html`, so each cycle hits every portal once and
+both the diff and the page come out of that single fetch. It refuses to commit a
+page under 20KB or with zero listing rows, and the cloud routine repeats those
+checks before publishing - a bad page has to pass two independent gates. The
+consequence of the split is that the published page tracks the newest local run:
+if this Mac is off for a day, the routine keeps publishing yesterday's page and
+says so in its report.
+
+Routine: `trig_01YHa11hFdNkRnKkm33zxfdC`, artifact
+`https://claude.ai/code/artifact/4eba3377-ccd0-4292-86a6-18c724c4ade3`.
+Note that creating a routine silently attaches every connected MCP connector -
+Robinhood, Gmail, Calendar, Drive - so clear them unless they are actually
+needed.
+
+Running `gen_html.py` standalone re-fetches everything, which is why nothing
+scheduled uses it.
 
 Scheduling lives in `~/Library/LaunchAgents/com.rp.carhunt.plist`
 (`StartInterval` 7200, `RunAtLoad`). Reload after editing:
