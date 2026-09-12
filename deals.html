@@ -1,0 +1,1039 @@
+<title>Hyderabad Car Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#edf0f3; --surface:#ffffff; --surface-2:#f6f8fa;
+  --ink:#0f1418; --muted:#59646f; --line:#d5dbe1;
+  --accent:#0b665c;
+  --strong:#0f6b52; --strong-bg:#e2f1ea;
+  --fair:#8a6212;   --fair-bg:#f6eedd;
+  --rich:#a63a2b;   --rich-bg:#f7e6e2;
+  --shadow:0 1px 2px rgba(15,20,24,.06), 0 4px 16px rgba(15,20,24,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0c1013; --surface:#141a1f; --surface-2:#192127;
+    --ink:#e2e7ec; --muted:#8a97a3; --line:#242d34;
+    --accent:#3fb9a6;
+    --strong:#5cc9a4; --strong-bg:#122c25;
+    --fair:#d3a44a;   --fair-bg:#2c2416;
+    --rich:#e07764;   --rich-bg:#301a16;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0c1013; --surface:#141a1f; --surface-2:#192127;
+  --ink:#e2e7ec; --muted:#8a97a3; --line:#242d34;
+  --accent:#3fb9a6;
+  --strong:#5cc9a4; --strong-bg:#122c25;
+  --fair:#d3a44a;   --fair-bg:#2c2416;
+  --rich:#e07764;   --rich-bg:#301a16;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px; margin:0 auto; padding-inline:20px; padding-block:0 64px}
+
+/* masthead ---------------------------------------------------------- */
+header{padding-block:40px 22px; border-bottom:1px solid var(--line)}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+  margin:0 0 10px;
+}
+h1{
+  font-family:Archivo,system-ui,sans-serif; font-weight:700; font-size:clamp(28px,4.4vw,42px);
+  letter-spacing:-.02em; line-height:1.05; margin:0 0 10px; text-wrap:balance;
+}
+.lede{margin:0; color:var(--muted); max-width:62ch}
+.stats{display:flex; flex-wrap:wrap; gap:28px; margin-top:24px}
+.stat b{
+  display:block; font-family:Archivo,sans-serif; font-size:26px; font-weight:700;
+  font-variant-numeric:tabular-nums; line-height:1;
+}
+.stat span{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+/* controls ---------------------------------------------------------- */
+.controls{
+  position:sticky; top:0; z-index:20; background:var(--ground);
+  border-bottom:1px solid var(--line); padding-block:12px;
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+}
+.seg{display:flex; border:1px solid var(--line); border-radius:7px; overflow:hidden}
+.seg button{
+  font:inherit; font-size:13px; padding:7px 13px; border:0; cursor:pointer;
+  background:var(--surface); color:var(--muted); border-right:1px solid var(--line);
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.spacer{flex:1 1 auto}
+label.sort{
+  font-size:13px; color:var(--muted); display:flex; align-items:center; gap:7px;
+}
+select{
+  font:inherit; font-size:13px; padding:6px 9px; border-radius:7px;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink);
+}
+button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+
+/* group + rows ------------------------------------------------------ */
+.group{margin-top:34px}
+.group > h2{
+  font-family:Archivo,sans-serif; font-size:15px; font-weight:600; margin:0 0 3px;
+  letter-spacing:-.01em;
+}
+.group .crit{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--muted);
+  margin:0 0 14px;
+}
+.rows{display:flex; flex-direction:column; gap:8px}
+
+.row{
+  background:var(--surface); border:1px solid var(--line); border-radius:9px;
+  border-left:3px solid var(--tier); box-shadow:var(--shadow); overflow:hidden;
+}
+.row[data-tier="strong"]{--tier:var(--strong)}
+.row[data-tier="fair"]{--tier:var(--fair)}
+.row[data-tier="rich"]{--tier:var(--rich)}
+.row[data-tier="unrated"]{--tier:var(--line)}
+
+.head{
+  display:grid; gap:14px; padding:13px 15px;
+  grid-template-columns:52px minmax(0,1fr) auto;
+  align-items:center;
+}
+.score{
+  width:52px; height:52px; border-radius:8px; display:grid; place-items:center;
+  background:var(--tier-bg); color:var(--tier); line-height:1;
+}
+.row[data-tier="strong"] .score{--tier-bg:var(--strong-bg)}
+.row[data-tier="fair"] .score{--tier-bg:var(--fair-bg)}
+.row[data-tier="rich"] .score{--tier-bg:var(--rich-bg)}
+.row[data-tier="unrated"] .score{--tier-bg:var(--surface-2); color:var(--muted)}
+.score b{font-family:Archivo,sans-serif; font-size:21px; font-weight:700; font-variant-numeric:tabular-nums}
+.score span{font-family:"IBM Plex Mono",monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; margin-top:2px}
+
+.title{min-width:0}
+.title h3{
+  font-family:Archivo,sans-serif; font-size:15.5px; font-weight:600; margin:0 0 3px;
+  letter-spacing:-.01em; overflow-wrap:anywhere;
+}
+.title .variant{color:var(--muted); font-weight:400}
+.meta{
+  display:flex; flex-wrap:wrap; gap:4px 12px; font-size:12.5px; color:var(--muted);
+  font-family:"IBM Plex Mono",monospace;
+}
+.meta .plate{
+  border:1px solid var(--line); border-radius:3px; padding:0 4px;
+  letter-spacing:.03em; color:var(--ink);
+}
+.price{text-align:right; white-space:nowrap}
+.price b{
+  font-family:Archivo,sans-serif; font-size:20px; font-weight:700;
+  font-variant-numeric:tabular-nums; display:block; letter-spacing:-.01em;
+}
+.price .was{font-size:12px; color:var(--muted); text-decoration:line-through}
+.price .delta{font-size:11.5px; font-family:"IBM Plex Mono",monospace; display:block; margin-top:2px}
+.delta.under{color:var(--strong)}
+.delta.over{color:var(--rich)}
+
+details{border-top:1px solid var(--line); background:var(--surface-2)}
+summary{
+  cursor:pointer; padding:9px 15px; font-size:12.5px; color:var(--muted);
+  font-family:"IBM Plex Mono",monospace; list-style:none;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ "; color:var(--accent)}
+details[open] summary::before{content:"▾ "}
+.why{padding:2px 15px 15px; display:flex; flex-direction:column; gap:9px}
+.why ul{margin:0; padding-left:17px; display:flex; flex-direction:column; gap:4px; font-size:13px}
+.why .conf{font-size:12px; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+.actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px}
+.actions a{
+  font-size:12.5px; text-decoration:none; color:var(--accent);
+  border:1px solid var(--line); border-radius:6px; padding:5px 10px; background:var(--surface);
+}
+.actions a:hover{border-color:var(--accent)}
+.also{font-size:12px; color:var(--muted)}
+
+.empty{color:var(--muted); font-size:14px; padding:18px 0}
+.meta .ev{
+  background:var(--accent); color:#fff; border-radius:3px; padding:0 5px;
+  font-size:10.5px; letter-spacing:.07em; font-weight:500;
+}
+.note{
+  margin:0 0 14px; padding:11px 13px; border-radius:8px; font-size:13px;
+  background:var(--surface-2); border:1px solid var(--line);
+  border-left:3px solid var(--fair); color:var(--muted); max-width:74ch;
+}
+
+/* method ------------------------------------------------------------ */
+.method{
+  margin-top:44px; border-top:1px solid var(--line); padding-top:22px;
+  color:var(--muted); font-size:13.5px; max-width:70ch;
+}
+.method h2{
+  font-family:Archivo,sans-serif; font-size:14px; color:var(--ink); margin:0 0 10px;
+}
+.method p{margin:0 0 11px}
+.method code{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px;
+  background:var(--surface-2); padding:1px 4px; border-radius:3px;
+}
+.legend{display:flex; flex-wrap:wrap; gap:16px; margin:0 0 14px; font-size:12.5px}
+.legend i{
+  width:9px; height:9px; border-radius:2px; display:inline-block; margin-right:6px;
+}
+
+@media (max-width:640px){
+  .head{grid-template-columns:44px minmax(0,1fr); row-gap:10px}
+  .score{width:44px; height:44px}
+  .price{grid-column:1 / -1; text-align:left; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+  .price .delta{margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · Droom</p>
+    <h1>Hyderabad Car Hunt</h1>
+    <p class="lede">Listings matching your two searches, de-duplicated across
+      five portals and scored against what comparable cars are actually asking.
+      Anything scoring below 40 is left out. Refreshed 11 Sep 2026, 11:44 PM.</p>
+    <div class="stats">
+      <div class="stat"><b>32</b><span>listings</span></div>
+      <div class="stat"><b>7</b><span>rated strong</span></div>
+      <div class="stat"><b>₹19.00L</b><span>cheapest 7-seater</span></div>
+      <div class="stat"><b>0</b><span>electric</span></div>
+      <div class="stat"><b>10</b><span>hidden below 40</span></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="seg" data-role="tier" role="group" aria-label="Filter by deal tier">
+      <button data-tier="all" aria-pressed="true">All</button>
+      <button data-tier="strong" aria-pressed="false">Strong</button>
+      <button data-tier="fair" aria-pressed="false">Fair</button>
+      <button data-tier="rich" aria-pressed="false">Rich</button>
+    </div>
+    <span class="spacer"></span>
+    <label class="sort" for="sort">Sort
+      <select id="sort">
+        <option value="score">Deal score</option>
+        <option value="price">Price, low first</option>
+        <option value="km">Odometer, low first</option>
+        <option value="year">Newest first</option>
+      </select>
+    </label>
+  </div>
+
+  
+<section class="group" id="seven_seater">
+  <h2>Seven-seaters · <span class="count">3</span> listings</h2>
+  <p class="crit">7-seater, diesel, automatic, &lt;=30k km, &lt;=20.0L · Hyderabad</p>
+  
+  <div class="rows">
+<article class="row" data-tier="fair" data-score="57"
+         data-price="1993000" data-km="23741" data-year="2023">
+  <div class="head">
+    <div class="score"><b>57</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Safari
+        <span class="variant">XZA PLUS O 6STR</span></h3>
+      <div class="meta"><span>23,741 km</span><span>diesel</span><span>1st owner</span><span>3y old</span><span class="plate">AP40</span><span>Hyderabad Puppalguda Telangana</span></div>
+    </div>
+    <div class="price"><b>₹19.93L</b><span class="delta under">1% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>1% below the ₹20.17L that comparable listings in this search imply</li><li>single owner (+4)</li></ul>
+      <p class="conf">Baseline confidence: thin - baseline drawn across models</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-tata-safari-2023-cars-hyderabad-10470301724/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="54"
+         data-price="2000000" data-km="21530" data-year="2023">
+  <div class="head">
+    <div class="score"><b>54</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Mahindra XUV700
+        <span class="variant">AX 7 D AT 7 STR</span></h3>
+      <div class="meta"><span>21,530 km</span><span>diesel</span><span>1st owner</span><span>3y old</span><span class="plate">TS07</span><span>Serilingampalle (M) Hyderabad Tela</span></div>
+    </div>
+    <div class="price"><b>₹20.00L</b><span class="was">₹21.19L</span> <span class="delta over">1% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>1% above the ₹19.76L that comparable listings in this search imply</li><li>single owner (+4)</li><li>marked down from ₹21.19L (+3)</li></ul>
+      <p class="conf">Baseline confidence: thin - baseline drawn across models</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-mahindra-xuv700-2023-cars-hyderabad-10433479193/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="50"
+         data-price="1900000" data-km="18500" data-year="2024">
+  <div class="head">
+    <div class="score"><b>50</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Hyundai Alcazar Signature 1.5 Diesel AT 6STR [2024-2025]
+        <span class="variant"></span></h3>
+      <div class="meta"><span>18,500 km</span><span>diesel</span><span>2nd owner</span><span>2y old</span></div>
+    </div>
+    <div class="price"><b>₹19.00L</b><span class="delta under">2% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>2% below the ₹19.38L that comparable listings in this search imply</li><li>second owner (-4)</li></ul>
+      <p class="conf">Baseline confidence: thin - baseline drawn across models</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/hyundai-alcazar/lqrd8ig6/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article></div>
+  <p class="empty" hidden>Nothing in this group matches the current filter.</p>
+</section>
+<section class="group" id="subcompact">
+  <h2>Sub-compact SUVs · <span class="count">29</span> listings</h2>
+  <p class="crit">sub-compact SUV, automatic, &lt;=30k km, &lt;=11.0L · Hyderabad</p>
+  
+  <div class="rows">
+<article class="row" data-tier="strong" data-score="89"
+         data-price="981337" data-km="17601" data-year="2024">
+  <div class="head">
+    <div class="score"><b>89</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Tata NEXON
+        <span class="variant">CREATIVE+ DCA 1.2 PETROL</span></h3>
+      <div class="meta"><span>17,601 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span class="plate">TG07</span><span>Bachupally, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹9.81L</b><span class="was">₹10.60L</span> <span class="delta under">15% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>15% below the ₹11.49L that 6 other Nexon listings imply</li><li>single owner (+4)</li><li>marked down from ₹10.60L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-tata-nexon-2024-cars-hyderabad-10447773186/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="88"
+         data-price="602547" data-km="11277" data-year="2023">
+  <div class="head">
+    <div class="score"><b>88</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Renault Kiger
+        <span class="variant">RXZ AMT</span></h3>
+      <div class="meta"><span>11,277 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS13</span><span>Uppal, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹6.03L</b><span class="was">₹6.36L</span> <span class="delta under">15% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>15% below the ₹7.12L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>marked down from ₹6.36L (+3)</li><li>only 3,759 km/yr - long idle periods (-3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarWale — price spread ₹0.00L.</p>
+      <div class="actions"><a href="https://www.cars24.com/buy-used-renault-kiger-2023-cars-hyderabad-10429776196/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="88"
+         data-price="950000" data-km="20000" data-year="2024">
+  <div class="head">
+    <div class="score"><b>88</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Hyundai Venue
+        <span class="variant">S Opt Turbo DCT</span></h3>
+      <div class="meta"><span>20,000 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span>Korremal</span></div>
+    </div>
+    <div class="price"><b>₹9.50L</b><span class="delta under">15% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>15% below the ₹11.21L that 3 other Venue listings imply</li><li>single owner (+4)</li><li>baseline blended with 3 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Hyundai-venue-s-opt-turbo-dct-cars-Hyderabad_96b40c90-52b9-481f-a2de-981703fed082.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="85"
+         data-price="690000" data-km="8930" data-year="2024">
+  <div class="head">
+    <div class="score"><b>85</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Renault Kiger
+        <span class="variant">RXZ AMT</span></h3>
+      <div class="meta"><span>8,930 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span>Nagole</span></div>
+    </div>
+    <div class="price"><b>₹6.90L</b><span class="delta under">14% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>14% below the ₹8.05L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarWale — price spread ₹0.00L.</p>
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Renault-kiger-rxz-amt-cars-Hyderabad_59d07bc1-89a0-4401-b7f5-78eef7f23b8a.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="84"
+         data-price="654100" data-km="19301" data-year="2023">
+  <div class="head">
+    <div class="score"><b>84</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Nissan Magnite XV Turbo CVT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>19,301 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Kompally</span></div>
+    </div>
+    <div class="price"><b>₹6.54L</b><span class="delta under">14% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>14% below the ₹7.58L that 6 other Magnite listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/nissan-magnite/8i9hqa1j/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="84"
+         data-price="700000" data-km="15000" data-year="2023">
+  <div class="head">
+    <div class="score"><b>84</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Punch Accomplished AMT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>15,000 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Administrative Building</span></div>
+    </div>
+    <div class="price"><b>₹7.00L</b><span class="delta under">14% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>14% below the ₹8.12L that 6 other Punch listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/tata-punch/uks5wb2u/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="strong" data-score="78"
+         data-price="685783" data-km="19515" data-year="2023">
+  <div class="head">
+    <div class="score"><b>78</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Nissan MAGNITE
+        <span class="variant">XV CVT TURBO KURO EDITION </span></h3>
+      <div class="meta"><span>19,515 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS08</span><span>Bachupally, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹6.86L</b><span class="was">₹8.54L</span> <span class="delta under">10% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>10% below the ₹7.58L that 6 other Magnite listings imply</li><li>single owner (+4)</li><li>marked down from ₹8.54L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarDekho, CarWale — price spread ₹0.00L.</p>
+      <div class="actions"><a href="https://www.cars24.com/buy-used-nissan-magnite-2023-cars-hyderabad-10405398178/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="62"
+         data-price="690000" data-km="19609" data-year="2025">
+  <div class="head">
+    <div class="score"><b>62</b><span>deal</span></div>
+    <div class="title">
+      <h3>2025 Nissan Magnite N-Connecta Petrol Automatic (AMT)
+        <span class="variant"></span></h3>
+      <div class="meta"><span>19,609 km</span><span>petrol</span><span>1st owner</span><span>1y old</span><span>Madhapur</span></div>
+    </div>
+    <div class="price"><b>₹6.90L</b><span class="delta under">4% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>4% below the ₹7.16L that 6 other Magnite listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/nissan-magnite/7zjf0pjm/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="61"
+         data-price="823000" data-km="11171" data-year="2023">
+  <div class="head">
+    <div class="score"><b>61</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Maruti Suzuki Fronx
+        <span class="variant">Delta Plus 1.2L AGS</span></h3>
+      <div class="meta"><span>11,171 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS15</span></div>
+    </div>
+    <div class="price"><b>₹8.23L</b><span class="delta under">5% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Spinny</summary>
+    <div class="why">
+      <ul><li>5% below the ₹8.63L that comparable listings in this search imply</li><li>single owner (+4)</li><li>only 3,724 km/yr - long idle periods (-3)</li></ul>
+      <p class="conf">Baseline confidence: thin - baseline drawn across models</p>
+      
+      <div class="actions"><a href="https://www.spinny.com/buy-used-cars/hyderabad/maruti-suzuki/fronx/delta-plus-12l-ags-2023/31894592/" target="_blank" rel="noopener">
+        Open on Spinny ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="59"
+         data-price="520000" data-km="28274" data-year="2021">
+  <div class="head">
+    <div class="score"><b>59</b><span>deal</span></div>
+    <div class="title">
+      <h3>2021 Renault Kiger RXT AMT Dual Tone
+        <span class="variant"></span></h3>
+      <div class="meta"><span>28,274 km</span><span>petrol</span><span>1st owner</span><span>5y old</span><span>Jubilee Hills</span></div>
+    </div>
+    <div class="price"><b>₹5.20L</b><span class="delta under">3% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>3% below the ₹5.37L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>5+ years old (-2)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on Spinny — price spread ₹0.09L.</p>
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/renault-kiger/8ubphpkx/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="59"
+         data-price="940000" data-km="5586" data-year="2025">
+  <div class="head">
+    <div class="score"><b>59</b><span>deal</span></div>
+    <div class="title">
+      <h3>2025 Hyundai Exter SX (O) Connect 1.2 AMT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>5,586 km</span><span>petrol</span><span>1st owner</span><span>1y old</span><span>Shaikpet</span></div>
+    </div>
+    <div class="price"><b>₹9.40L</b><span class="delta under">2% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>2% below the ₹9.63L that 4 other Exter listings imply</li><li>single owner (+4)</li><li>baseline blended with 4 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/hyundai-exter/em5d60du/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="59"
+         data-price="978340" data-km="25476" data-year="2023">
+  <div class="head">
+    <div class="score"><b>59</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata NEXON
+        <span class="variant">XZA PLUS LUX SUNROOF RED DARK PETROL</span></h3>
+      <div class="meta"><span>25,476 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS09</span><span>Upperpally, Attapur, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹9.78L</b><span class="was">₹10.58L</span> <span class="delta under">1% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>1% below the ₹9.85L that 6 other Nexon listings imply</li><li>single owner (+4)</li><li>marked down from ₹10.58L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-tata-nexon-2023-cars-hyderabad-10062876182/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="59"
+         data-price="1001682" data-km="26684" data-year="2024">
+  <div class="head">
+    <div class="score"><b>59</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Tata NEXON
+        <span class="variant">CREATIVE+ SUNROOF AMT 1.2 PETROL</span></h3>
+      <div class="meta"><span>26,684 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span class="plate">TG13</span><span>GVK One Mall, Banjara Hills, Hyder</span></div>
+    </div>
+    <div class="price"><b>₹10.02L</b><span class="was">₹11.16L</span> <span class="delta under">1% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>1% below the ₹10.09L that 6 other Nexon listings imply</li><li>single owner (+4)</li><li>marked down from ₹11.16L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-tata-nexon-2024-cars-hyderabad-10486398141/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="58"
+         data-price="752000" data-km="27184" data-year="2023">
+  <div class="head">
+    <div class="score"><b>58</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Punch
+        <span class="variant">Creative Dual Tone AMT</span></h3>
+      <div class="meta"><span>27,184 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TG08</span></div>
+    </div>
+    <div class="price"><b>₹7.52L</b><span class="delta under">2% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Spinny</summary>
+    <div class="why">
+      <ul><li>2% below the ₹7.67L that 6 other Punch listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarWale — price spread ₹0.13L.</p>
+      <div class="actions"><a href="https://www.spinny.com/buy-used-cars/hyderabad/tata/punch/creative-dual-tone-amt-2024/31964656/" target="_blank" rel="noopener">
+        Open on Spinny ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="55"
+         data-price="810000" data-km="17500" data-year="2023">
+  <div class="head">
+    <div class="score"><b>55</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Punch Creative IRA AMT Dual Tone [2022-2023]
+        <span class="variant"></span></h3>
+      <div class="meta"><span>17,500 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Kondapur</span></div>
+    </div>
+    <div class="price"><b>₹8.10L</b><span class="delta under">0% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>0% below the ₹8.12L that 6 other Punch listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/tata-punch/2co1ge3n/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="55"
+         data-price="850000" data-km="9700" data-year="2024">
+  <div class="head">
+    <div class="score"><b>55</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Hyundai Exter SX (O) 1.2 AMT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>9,700 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span>L B Nagar</span></div>
+    </div>
+    <div class="price"><b>₹8.50L</b><span class="delta under">0% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>0% below the ₹8.53L that 4 other Exter listings imply</li><li>single owner (+4)</li><li>baseline blended with 4 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/hyundai-exter/r7imaykj/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="55"
+         data-price="985990" data-km="21986" data-year="2024">
+  <div class="head">
+    <div class="score"><b>55</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Kia Sonet
+        <span class="variant">HTX Plus Turbo iMT</span></h3>
+      <div class="meta"><span>21,986 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span>Ap Police Academy</span></div>
+    </div>
+    <div class="price"><b>₹9.86L</b><span class="delta under">0% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>0% below the ₹9.89L that 3 other Sonet listings imply</li><li>single owner (+4)</li><li>baseline blended with 3 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Kia-sonet-htx-plus-turbo-imt-cars-Hyderabad_a063a401-966d-4e1b-aa44-cba218488608.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="55"
+         data-price="1000000" data-km="24633" data-year="2023">
+  <div class="head">
+    <div class="score"><b>55</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata NEXON
+        <span class="variant">XZA PLUS SUNROOF PETROL</span></h3>
+      <div class="meta"><span>24,633 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS08</span><span>Bachupally Hyderabad Telangana</span></div>
+    </div>
+    <div class="price"><b>₹10.00L</b><span class="was">₹10.70L</span> <span class="delta over">1% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>1% above the ₹9.93L that 6 other Nexon listings imply</li><li>single owner (+4)</li><li>marked down from ₹10.70L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-tata-nexon-2023-cars-hyderabad-10494579181/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="54"
+         data-price="978139" data-km="20178" data-year="2023">
+  <div class="head">
+    <div class="score"><b>54</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Kia Sonet
+        <span class="variant">HTX Turbo DCT</span></h3>
+      <div class="meta"><span>20,178 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Kukatpally</span></div>
+    </div>
+    <div class="price"><b>₹9.78L</b><span class="delta under">0% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>0% below the ₹9.78L that 3 other Sonet listings imply</li><li>single owner (+4)</li><li>baseline blended with 3 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarWale, Spinny — price spread ₹0.16L.</p>
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Kia-sonet-htx-turbo-dct-cars-Hyderabad_4b9fd37b-ad9d-479d-9ffc-a5eaa4834750.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="54"
+         data-price="1078090" data-km="13772" data-year="2023">
+  <div class="head">
+    <div class="score"><b>54</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Hyundai Venue
+        <span class="variant">HX 10 Turbo DCT</span></h3>
+      <div class="meta"><span>13,772 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Uppal</span></div>
+    </div>
+    <div class="price"><b>₹10.78L</b><span class="delta under">0% under comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>0% below the ₹10.78L that 3 other Venue listings imply</li><li>single owner (+4)</li><li>baseline blended with 3 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarWale — price spread ₹0.00L.</p>
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Hyundai-venue-hx-10-turbo-dct-cars-Hyderabad_fd66e98b-db8e-4eff-b20a-7f1d9c03a3bb.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="53"
+         data-price="815000" data-km="14000" data-year="2023">
+  <div class="head">
+    <div class="score"><b>53</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Punch
+        <span class="variant">Creative AMT</span></h3>
+      <div class="meta"><span>14,000 km</span><span>petrol</span><span>1st owner</span><span>3y old</span></div>
+    </div>
+    <div class="price"><b>₹8.15L</b><span class="delta over">0% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>0% above the ₹8.12L that 6 other Punch listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Tata-punch-creative-amt-cars-Hyderabad_1c29dd32-614d-48a0-af4c-d57ed1a65b7f.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="51"
+         data-price="950000" data-km="14000" data-year="2025">
+  <div class="head">
+    <div class="score"><b>51</b><span>deal</span></div>
+    <div class="title">
+      <h3>2025 Mahindra XUV 3XO MX2 Pro Petrol 1.2L Turbo Automatic (TC)
+        <span class="variant"></span></h3>
+      <div class="meta"><span>14,000 km</span><span>petrol</span><span>1st owner</span><span>1y old</span><span>Dr A S Raonagar Colony</span></div>
+    </div>
+    <div class="price"><b>₹9.50L</b><span class="delta over">1% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>1% above the ₹9.37L that comparable listings in this search imply</li><li>single owner (+4)</li></ul>
+      <p class="conf">Baseline confidence: thin - baseline drawn across models</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/mahindra-xuv-3xo/wm4u9hg8/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="51"
+         data-price="1042000" data-km="12939" data-year="2023">
+  <div class="head">
+    <div class="score"><b>51</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Tata Nexon
+        <span class="variant">Creative Plus 1.2 Revotron Petrol 7DCA DT</span></h3>
+      <div class="meta"><span>12,939 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span class="plate">TS07</span></div>
+    </div>
+    <div class="price"><b>₹10.42L</b><span class="delta over">1% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Spinny</summary>
+    <div class="why">
+      <ul><li>1% above the ₹10.28L that 6 other Nexon listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.spinny.com/buy-used-cars/hyderabad/tata/nexon/creative-plus-12-revotron-petrol-7dca-dt-2024/31384897/" target="_blank" rel="noopener">
+        Open on Spinny ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="fair" data-score="50"
+         data-price="855000" data-km="4274" data-year="2024">
+  <div class="head">
+    <div class="score"><b>50</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Hyundai Exter SX (O) Connect 1.2 AMT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>4,274 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span>Administrative Building</span></div>
+    </div>
+    <div class="price"><b>₹8.55L</b><span class="delta over">0% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>0% above the ₹8.53L that 4 other Exter listings imply</li><li>single owner (+4)</li><li>only 2,137 km/yr - long idle periods (-3)</li><li>baseline blended with 4 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on Spinny — price spread ₹0.12L.</p>
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/hyundai-exter/7gk2782w/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="rich" data-score="49"
+         data-price="723279" data-km="19740" data-year="2022">
+  <div class="head">
+    <div class="score"><b>49</b><span>deal</span></div>
+    <div class="title">
+      <h3>2022 Nissan MAGNITE
+        <span class="variant">XV PREMIUM TURBO CVT</span></h3>
+      <div class="meta"><span>19,740 km</span><span>petrol</span><span>1st owner</span><span>4y old</span><span class="plate">TS29</span><span>Kompally, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹7.23L</b><span class="was">₹7.84L</span> <span class="delta over">4% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>4% above the ₹6.98L that 6 other Magnite listings imply</li><li>single owner (+4)</li><li>marked down from ₹7.84L (+3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarDekho, CarWale — price spread ₹0.00L.</p>
+      <div class="actions"><a href="https://www.cars24.com/buy-used-nissan-magnite-2022-cars-hyderabad-10489698151/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="rich" data-score="48"
+         data-price="1096364" data-km="24476" data-year="2024">
+  <div class="head">
+    <div class="score"><b>48</b><span>deal</span></div>
+    <div class="title">
+      <h3>2024 Hyundai VENUE N LINE
+        <span class="variant">N8 1.0 TURBO DCT</span></h3>
+      <div class="meta"><span>24,476 km</span><span>petrol</span><span>1st owner</span><span>2y old</span><span class="plate">TG15</span><span>Bachupally, Hyderabad</span></div>
+    </div>
+    <div class="price"><b>₹10.96L</b><span class="was">₹11.28L</span> <span class="delta over">4% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · Cars24</summary>
+    <div class="why">
+      <ul><li>4% above the ₹10.52L that 3 other Venue listings imply</li><li>single owner (+4)</li><li>marked down from ₹11.28L (+3)</li><li>baseline blended with 3 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cars24.com/buy-used-hyundai-venue-n-line-2024-cars-hyderabad-10465274136/" target="_blank" rel="noopener">
+        Open on Cars24 ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="rich" data-score="45"
+         data-price="740000" data-km="20000" data-year="2023">
+  <div class="head">
+    <div class="score"><b>45</b><span>deal</span></div>
+    <div class="title">
+      <h3>2023 Renault Kiger
+        <span class="variant">RXZ Turbo CVT</span></h3>
+      <div class="meta"><span>20,000 km</span><span>petrol</span><span>1st owner</span><span>3y old</span><span>Kondapur</span></div>
+    </div>
+    <div class="price"><b>₹7.40L</b><span class="delta over">4% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>4% above the ₹7.12L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      <p class="also">Same car also listed on CarDekho — price spread ₹0.40L.</p>
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Renault-kiger-rxz-turbo-cvt-cars-Hyderabad_6ff73881-99b2-4afc-950f-aa7e8156e0ac.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="rich" data-score="44"
+         data-price="650000" data-km="15000" data-year="2022">
+  <div class="head">
+    <div class="score"><b>44</b><span>deal</span></div>
+    <div class="title">
+      <h3>2022 Renault Kiger RXZ AMT
+        <span class="variant"></span></h3>
+      <div class="meta"><span>15,000 km</span><span>petrol</span><span>1st owner</span><span>4y old</span><span>Vaidehi Nagar</span></div>
+    </div>
+    <div class="price"><b>₹6.50L</b><span class="delta over">3% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarWale</summary>
+    <div class="why">
+      <ul><li>3% above the ₹6.31L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>only 3,750 km/yr - long idle periods (-3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.carwale.com/used/hyderabad/renault-kiger/9x11gyqk/" target="_blank" rel="noopener">
+        Open on CarWale ↗</a></div>
+    </div>
+  </details>
+</article>
+<article class="row" data-tier="rich" data-score="42"
+         data-price="630000" data-km="14500" data-year="2022">
+  <div class="head">
+    <div class="score"><b>42</b><span>deal</span></div>
+    <div class="title">
+      <h3>2022 Renault Kiger
+        <span class="variant">RXT AMT</span></h3>
+      <div class="meta"><span>14,500 km</span><span>petrol</span><span>1st owner</span><span>4y old</span><span>Saidabad Colony</span></div>
+    </div>
+    <div class="price"><b>₹6.30L</b><span class="delta over">4% over comparables</span></div>
+  </div>
+  <details>
+    <summary>How this scored · CarDekho</summary>
+    <div class="why">
+      <ul><li>4% above the ₹6.06L that 6 other Kiger listings imply</li><li>single owner (+4)</li><li>only 3,625 km/yr - long idle periods (-3)</li><li>baseline blended with 6 peers in this list</li></ul>
+      <p class="conf">Baseline confidence: model peers</p>
+      
+      <div class="actions"><a href="https://www.cardekho.com/used-car-details/used-Renault-kiger-rxt-amt-cars-Hyderabad_b6912ac5-c462-42c4-93a5-2974539835f4.htm" target="_blank" rel="noopener">
+        Open on CarDekho ↗</a></div>
+    </div>
+  </details>
+</article></div>
+  <p class="empty" hidden>Nothing in this group matches the current filter.</p>
+</section>
+
+  <section class="method">
+    <h2>How the deal score works</h2>
+    <p class="legend">
+      <span><i style="background:var(--strong)"></i>Strong — 68+</span>
+      <span><i style="background:var(--fair)"></i>Fair — 50-67</span>
+      <span><i style="background:var(--rich)"></i>Rich — 40-49</span>
+    </p>
+    <p>Everything here sits inside your budget: ₹20L for a seven-seater, ₹11L
+      for a sub-compact, both under 30,000 km. Electric cars are included on the
+      same terms rather than in a group of their own — if an EV does not clear
+      the cap, it does not appear. Anything scoring under 40 is dropped
+      before the page is written.</p>
+    <p>India has no published used-car price index, so the baseline is built,
+      not looked up. Each car starts from an approximate on-road-when-new price
+      for its model, discounted along a retention curve for age and adjusted for
+      whether the odometer runs ahead of or behind the ~12,000 km a year a
+      private car here typically covers.</p>
+    <p>That estimate carries systematic bias — one curve cannot fit both a Kiger
+      and an XUV700. So every car is then re-centred on the <em>median asking
+      ratio of its comparables</em>: other listings of the same model where this
+      list holds three or more, otherwise the whole search group. What survives
+      the re-centring is the only thing worth reading — how this car is priced
+      against cars you could buy instead. Ownership count, a visible markdown,
+      and unusual km-per-year then adjust the number by a few points each.</p>
+    <p>Two honest limits. A score near <code>50</code> means typical for its
+      comparables, not good value in absolute terms — the whole segment can be
+      expensive at once. And where a group is thin (the 7-seaters especially),
+      the baseline is drawn across different models and the number is weak;
+      each card names its own confidence.</p>
+    <p><strong>Electric cars are scored on their own curve.</strong> They are
+      never pooled with their petrol twins — a Nexon EV is compared to other
+      Nexon EVs, never to a petrol Nexon — and they run a steeper retention
+      curve, because buyers here discount an unknown battery and every new model
+      year lands with more range at the same price. Battery health is the whole
+      risk and the score cannot see it: get a state-of-health report, check
+      whether a Tata's 8-year / 1.6-lakh-km battery warranty transfers, and for
+      an MG Windsor confirm it was not sold under BaaS, where the battery is
+      rented and the per-km fee continues after you buy.</p>
+    <p><strong>The score reads price only.</strong> It knows nothing about
+      accident history, service records or hypothecation. Nothing here is a
+      valuation or advice — verify on VAHAN, check the insurance NCB for claim
+      history, and get an independent inspection before any money moves.</p>
+  </section>
+</div>
+<script>
+const rows = Array.from(document.querySelectorAll('.row'));
+const groups = Array.from(document.querySelectorAll('.group'));
+
+function apply(){
+  const tier = document.querySelector('.seg[data-role=tier] button[aria-pressed=true]').dataset.tier;
+  const sort = document.getElementById('sort').value;
+  groups.forEach(g => {
+    const list = g.querySelector('.rows');
+    const kids = Array.from(list.children);
+    kids.forEach(r => {
+      r.hidden = !(tier === 'all' || r.dataset.tier === tier);
+    });
+    kids.sort((a,b) => {
+      const n = k => parseFloat(k.dataset[sort] || 0);
+      return sort === 'price' || sort === 'km' ? n(a)-n(b) : n(b)-n(a);
+    }).forEach(r => list.appendChild(r));
+    const shown = kids.filter(r => !r.hidden).length;
+    g.querySelector('.empty').hidden = shown > 0;
+    g.querySelector('.count').textContent = shown;
+  });
+}
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    b.parentElement.querySelectorAll('button')
+      .forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    apply();
+  });
+});
+document.getElementById('sort').addEventListener('change', apply);
+apply();
+</script>
