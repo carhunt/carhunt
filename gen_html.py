@@ -421,10 +421,10 @@ def render(groups, out=OUT):
 <style>{CSS}</style>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · Droom</p>
+    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale</p>
     <h1>Hyderabad Car Hunt</h1>
     <p class="lede">Listings matching your saved searches, de-duplicated across
-      five portals and scored against what comparable cars are actually asking.
+      four portals and scored against what comparable cars are actually asking.
       Anything scoring below {MIN_SCORE} is left out. Refreshed {esc(stamp)}.</p>
     <div class="stats">
       <div class="stat"><b>{total}</b><span>listings</span></div>
