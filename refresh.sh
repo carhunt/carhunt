@@ -5,7 +5,7 @@ set -u
 cd "$(dirname "$0")" || exit 1
 export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
 
-/usr/bin/python3 carhunt.py --html || { echo "carhunt failed"; exit 1; }
+python3 carhunt.py --html || { echo "carhunt failed"; exit 1; }
 
 # refuse to commit a page the sanity checks would reject downstream
 bytes=$(wc -c < deals.html)
