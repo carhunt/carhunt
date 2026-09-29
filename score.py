@@ -35,6 +35,21 @@ APPROX_NEW = {
     "NEXON EV": 1750000, "PUNCH EV": 1400000, "XUV400": 1800000,
     "TIAGO EV": 1150000, "WINDSOR": 1500000, "COMET": 900000,
     "ZS EV": 2600000, "EC3": 1300000, "EV6": 6500000, "CLAVIS": 2300000,
+    # Luxury SUVs - approximate on-road Hyderabad when new
+    "X1": 5500000, "X3": 8500000, "X4": 9500000, "X5": 11500000,
+    "X6": 13000000, "X7": 14500000,
+    "GLA": 5800000, "GLB": 7500000, "GLC": 9000000, "GLE": 12500000,
+    "GLS": 16500000, "EQB": 8500000,
+    "Q2": 5000000, "Q3": 5800000, "Q5": 8000000, "Q7": 10500000,
+    "Q8": 13500000,
+    "COMPASS": 3200000, "MERIDIAN": 4200000, "WRANGLER": 7500000,
+    "GRAND CHEROKEE": 9800000,
+    "EVOQUE": 8500000, "VELAR": 9500000, "DISCOVERY": 8200000,
+    "DEFENDER": 12500000, "RANGE ROVER": 16000000,
+    # ADAS-bearing mainstream models
+    "ASTOR": 2000000, "CRETA": 2200000, "SELTOS": 2300000,
+    "HARRIER": 2800000, "ELEVATE": 2000000, "CITY": 1800000,
+    "AMAZE": 1300000, "VICTORIS": 1800000,
 }
 VARIANT_BUMP = [
     ("AX 7 LUXURY", 1.10), ("AX7 LUXURY", 1.10), ("SIGNATURE", 1.10),
@@ -73,7 +88,12 @@ def is_ev(car):
     return "electric" in str(car.get("fuel", "")).lower()
 
 
-def _retention(age, ev=False):
+LUXURY = {"X1","X3","X4","X5","X6","X7","GLA","GLB","GLC","GLE","GLS","EQB",
+          "Q2","Q3","Q5","Q7","Q8","WRANGLER","GRAND CHEROKEE","EVOQUE",
+          "VELAR","DISCOVERY","DEFENDER","RANGE ROVER"}
+
+
+def _retention(age, ev=False, luxury=False):
     """Share of on-road-new price a clean example holds after `age` years.
 
     EVs fall away far faster here: buyers discount an unknown battery, and each
@@ -82,6 +102,9 @@ def _retention(age, ev=False):
     """
     if ev:
         return 0.70 if age <= 0 else 0.70 * (0.85 ** (age - 1))
+    if luxury:
+        # German SUVs shed more up front: big first-year drop, then steady
+        return 0.74 if age <= 0 else 0.74 * (0.86 ** (age - 1))
     if age <= 0:
         return 0.92
     return 0.80 * (0.885 ** (age - 1))
@@ -116,8 +139,9 @@ def score_all(cars):
         anchor = _anchor(c)
         c["_anchor"] = anchor
         c["ev"] = is_ev(c)
-        c["expected"] = (int(anchor * _retention(age, c["ev"]) * _km_adjust(c["km"], age))
-                         if anchor else None)
+        c["luxury"] = model_token(c) in LUXURY
+        c["expected"] = (int(anchor * _retention(age, c["ev"], c["luxury"])
+                             * _km_adjust(c["km"], age)) if anchor else None)
 
     # pass 2 - recentre on what comparable listings actually ask.
     #

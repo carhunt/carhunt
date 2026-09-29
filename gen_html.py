@@ -91,6 +91,9 @@ h1{
 }
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--accent); color:#fff}
+.seg button b{font-weight:600; opacity:.6; margin-left:3px; font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"] b{opacity:.8}
+.seg[data-role="group"] button{white-space:nowrap}
 .spacer{flex:1 1 auto}
 label.sort{
   font-size:13px; color:var(--muted); display:flex; align-items:center; gap:7px;
@@ -199,8 +202,15 @@ details[open] summary::before{content:"▾ "}
   margin-top:44px; border-top:1px solid var(--line); padding-top:22px;
   color:var(--muted); font-size:13.5px; max-width:70ch;
 }
+.method > summary{
+  cursor:pointer; list-style:none; padding:0; font-family:inherit;
+}
+.method > summary::-webkit-details-marker{display:none}
+.method > summary::before{content:"▸ "; color:var(--accent)}
+.method[open] > summary::before{content:"▾ "}
 .method h2{
-  font-family:Archivo,sans-serif; font-size:14px; color:var(--ink); margin:0 0 10px;
+  font-family:Archivo,sans-serif; font-size:14px; color:var(--ink);
+  margin:0 0 10px; display:inline;
 }
 .method p{margin:0 0 11px}
 .method code{
@@ -227,8 +237,11 @@ const groups = Array.from(document.querySelectorAll('.group'));
 
 function apply(){
   const tier = document.querySelector('.seg[data-role=tier] button[aria-pressed=true]').dataset.tier;
+  const want = document.querySelector('.seg[data-role=group] button[aria-pressed=true]').dataset.group;
   const sort = document.getElementById('sort').value;
   groups.forEach(g => {
+    g.hidden = !(want === 'all' || g.id === want);
+    if (g.hidden) return;
     const list = g.querySelector('.rows');
     const kids = Array.from(list.children);
     kids.forEach(r => {
@@ -259,8 +272,16 @@ apply();
 HEADINGS = {
     "seven_seater": "Seven-seaters",
     "subcompact": "Sub-compact SUVs",
+    "luxury": "Luxury SUVs",
+    "adas": "ADAS-equipped",
 }
-NOTES = {}
+NOTES = {
+    "adas": ("ADAS depends on the model year as well as the trim - a Seltos GTX+ "
+             "or City ZX from before its facelift wears the same badge with none "
+             "of the hardware. Only trims and years that actually shipped a "
+             "driver-assist suite appear here. Confirm the radar and camera on "
+             "the car before you rely on it."),
+}
 
 # Anything scoring below this is priced badly enough not to be worth your time,
 # so it never reaches the page. It still appears in carhunt.log and state.json.
@@ -362,7 +383,8 @@ def render(groups, out=OUT):
     for key, cfg, cars in groups:
         cars = sc.score_all(list(cars))
         before = len(cars)
-        cars = [c for c in cars if (c.get("score") or 0) >= MIN_SCORE]
+        cars = [c for c in cars
+                if c.get("score") is None or c["score"] >= MIN_SCORE]
         cut += before - len(cars)
         cars.sort(key=lambda x: -(x["score"] or 0))
         total += len(cars)
@@ -386,6 +408,11 @@ def render(groups, out=OUT):
   <p class="empty" hidden>Nothing in this group matches the current filter.</p>
 </section>""")
 
+    group_buttons = "".join(
+        f'<button data-group="{key}" aria-pressed="false">'
+        f'{esc(HEADINGS.get(key, key))} <b>{len(cars)}</b></button>'
+        for key, _cfg, cars in groups)
+
     stamp = datetime.now().strftime("%-d %b %Y, %-I:%M %p")
     page = f"""<title>Hyderabad Car Hunt</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -396,7 +423,7 @@ def render(groups, out=OUT):
   <header>
     <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · Droom</p>
     <h1>Hyderabad Car Hunt</h1>
-    <p class="lede">Listings matching your two searches, de-duplicated across
+    <p class="lede">Listings matching your saved searches, de-duplicated across
       five portals and scored against what comparable cars are actually asking.
       Anything scoring below {MIN_SCORE} is left out. Refreshed {esc(stamp)}.</p>
     <div class="stats">
@@ -409,6 +436,10 @@ def render(groups, out=OUT):
   </header>
 
   <div class="controls">
+    <div class="seg" data-role="group" role="group" aria-label="Filter by vehicle type">
+      <button data-group="all" aria-pressed="true">All types</button>
+      {group_buttons}
+    </div>
     <div class="seg" data-role="tier" role="group" aria-label="Filter by deal tier">
       <button data-tier="all" aria-pressed="true">All</button>
       <button data-tier="strong" aria-pressed="false">Strong</button>
@@ -428,17 +459,18 @@ def render(groups, out=OUT):
 
   {''.join(body)}
 
-  <section class="method">
-    <h2>How the deal score works</h2>
+  <details class="method">
+    <summary><h2>How the deal score works</h2></summary>
     <p class="legend">
       <span><i style="background:var(--strong)"></i>Strong — 68+</span>
       <span><i style="background:var(--fair)"></i>Fair — 50-67</span>
       <span><i style="background:var(--rich)"></i>Rich — 40-49</span>
     </p>
-    <p>Everything here sits inside your budget: ₹20L for a seven-seater, ₹11L
-      for a sub-compact, both under 30,000 km. Electric cars are included on the
-      same terms rather than in a group of their own — if an EV does not clear
-      the cap, it does not appear. Anything scoring under {MIN_SCORE} is dropped
+    <p>Everything here sits inside your limits: ₹20L for a seven-seater and
+      ₹11L for a sub-compact, both under 30,000 km; ₹25–40L for a luxury SUV,
+      2023 or newer and under 40,000 km. Electric cars are included on the same
+      terms rather than in a group of their own — if an EV does not clear the
+      cap, it does not appear. Anything scoring under {MIN_SCORE} is dropped
       before the page is written.</p>
     <p>India has no published used-car price index, so the baseline is built,
       not looked up. Each car starts from an approximate on-road-when-new price
@@ -470,7 +502,7 @@ def render(groups, out=OUT):
       accident history, service records or hypothecation. Nothing here is a
       valuation or advice — verify on VAHAN, check the insurance NCB for claim
       history, and get an independent inspection before any money moves.</p>
-  </section>
+  </details>
 </div>
 <script>{JS}</script>
 """

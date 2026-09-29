@@ -21,6 +21,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 DEBUG = "--debug" in sys.argv
 GRACE = 3   # runs a listing must be absent before it counts as sold
+THIS_YEAR = 2026
 CTX = ssl.create_default_context()
 
 # ---------------------------------------------------------------- searches
@@ -36,6 +37,25 @@ SUB = ["NEXON", "SONET", "VENUE", "BREZZA", "PUNCH", "MAGNITE", "KIGER",
        "ECOSPORT", "WR-V", "CURVV",
        # sub-compact SUV EVs (Nexon EV / Punch EV already match above)
        "XUV400", "WINDSOR", "EC3", "ZS EV"]
+
+# ADAS is decided by trim AND model year: a Seltos GTX+ or City ZX from before
+# the facelift wears the same badge with none of the hardware. (model token,
+# trim pattern, first year that trim actually shipped ADAS)
+ADAS_RULES = [
+    ("ASTOR",   r"\bSHARP\b|\bSAVVY\b",                 2021),
+    ("XUV700",  r"\bAX ?7\b",                            2021),
+    ("XUV 3XO", r"AX ?7",                                 2024),
+    ("XUV3XO",  r"AX ?7",                                 2024),
+    ("CRETA",   r"SX ?\(?O\)?",                           2024),
+    ("SELTOS",  r"X-?LINE|GTX",                           2023),
+    ("HARRIER", r"FEARLESS|ADVENTURE|\bXZA?\+",           2023),
+    ("SAFARI",  r"ACCOMPLISHED|ADVENTURE|\bXZA?\+",       2023),
+    ("CITY",    r"\bZX\b",                               2023),
+    ("ELEVATE", r"\bZX\b",                               2023),
+    ("AMAZE",   r"\bZX\b",                               2024),
+    ("CURVV",   r"ACCOMPLISHED|EMPOWERED",                2024),
+    ("VICTORIS", r".",                                    2025),
+]
 
 SEARCHES = {
     "seven_seater": {
@@ -66,6 +86,52 @@ SEARCHES = {
                "renault-kiger", "mahindra-xuv300", "mahindra-xuv-3xo",
                "hyundai-exter", "tata-nexon-ev", "tata-punch-ev",
                "mahindra-xuv400", "mg-windsor-ev", "citroen-ec3"],
+    },
+    # Matched on specific SUV nameplates rather than on the marque, so the
+    # badge-engineered sedans (3 Series, C-Class, A4) stay out of an SUV list.
+    "luxury": {
+        "label": "luxury SUV, automatic, 2023 or newer, <=40k km, Rs 25-40L",
+        "models": [
+            # BMW
+            "X1", "X3", "X4", "X5", "X6", "X7", "IX1", "IX3",
+            # Mercedes-Benz
+            "GLA", "GLB", "GLC", "GLE", "GLS", "EQA", "EQB", "EQC", "G 350",
+            # Audi
+            "Q2", "Q3", "Q5", "Q7", "Q8", "E-TRON", "ETRON",
+            # Jeep
+            "COMPASS", "MERIDIAN", "WRANGLER", "GRAND CHEROKEE",
+            # Land Rover
+            "EVOQUE", "VELAR", "DISCOVERY", "DEFENDER", "RANGE ROVER",
+        ],
+        "fuel": None, "gear": {"automatic"}, "assume_automatic": True,
+        "min_price": 2500000, "max_price": 4000000,
+        "min_year": THIS_YEAR - 3,      # "3 years max age"
+        "max_km": 40000,
+        "cd": ["bmw-x1", "bmw-x3", "bmw-x5", "bmw-x7",
+               "mercedes-benz-gla", "mercedes-benz-glb", "mercedes-benz-glc",
+               "mercedes-benz-gle", "audi-q3", "audi-q5", "audi-q7",
+               "jeep-compass", "jeep-meridian", "jeep-wrangler",
+               "land-rover-range-rover-evoque", "land-rover-discovery-sport",
+               "land-rover-range-rover-velar", "land-rover-defender"],
+        "cw": ["bmw-x1", "bmw-x3", "bmw-x5", "bmw-x7",
+               "mercedes-benz-gla", "mercedes-benz-glb", "mercedes-benz-glc",
+               "mercedes-benz-gle", "audi-q3", "audi-q5", "audi-q7",
+               "jeep-compass", "jeep-meridian", "jeep-wrangler",
+               "land-rover-range-rover-evoque", "land-rover-discovery-sport",
+               "land-rover-range-rover-velar", "land-rover-defender"],
+    },
+    "adas": {
+        "label": "ADAS-equipped, <=60k km, Rs 8-16L",
+        "models": [m for m, _p, _y in ADAS_RULES],
+        "trim_rules": ADAS_RULES,
+        "fuel": None, "gear": None,
+        "min_price": 800000, "max_price": 1600000, "max_km": 60000,
+        "cd": ["mg-astor", "mahindra-xuv700", "hyundai-creta", "kia-seltos",
+               "honda-city", "honda-elevate", "mahindra-xuv-3xo",
+               "tata-harrier", "tata-safari", "honda-amaze", "tata-curvv"],
+        "cw": ["mg-astor", "mahindra-xuv700", "hyundai-creta", "kia-seltos",
+               "honda-city", "honda-elevate", "mahindra-xuv-3xo",
+               "tata-harrier", "tata-safari", "honda-amaze", "tata-curvv"],
     },
 }
 
@@ -137,17 +203,54 @@ def rec(**kw):
     return kw
 
 
+_TOKEN_CACHE = {}
+
+
+def _token_re(models):
+    key = id(models)
+    if key not in _TOKEN_CACHE:
+        _TOKEN_CACHE[key] = re.compile(
+            "|".join(r"\b" + re.escape(m) + r"\b" for m in models))
+    return _TOKEN_CACHE[key]
+
+
 def matches(c, cfg):
     name = f"{c['name']} {c.get('variant','')}".upper()
-    if not any(m in name for m in cfg["models"]):
+    # whole-word match: plain substring let "X4" hit "4X4", "Q3" hit "SQ3", etc.
+    if not _token_re(cfg["models"]).search(name):
         return False
-    if not (0 < c["price"] <= cfg["max_price"]):
+    if not (cfg.get("min_price", 1) <= c["price"] <= cfg["max_price"]):
         return False
+    if cfg.get("min_year"):
+        try:
+            if int(c["year"]) < cfg["min_year"]:
+                return False
+        except (TypeError, ValueError):
+            return False
     if not (0 < c["km"] <= cfg["max_km"]):
         return False
     if cfg["fuel"] and c["fuel"].lower() not in cfg["fuel"]:
         return False
-    if cfg["gear"] and c["gear"].lower() not in cfg["gear"]:
+    rules = cfg.get("trim_rules")
+    if rules:
+        ok = False
+        for model, pat, min_yr in rules:
+            if model in name and re.search(pat, name):
+                try:
+                    ok = int(c["year"]) >= min_yr
+                except (TypeError, ValueError):
+                    ok = False
+                break
+        if not ok:
+            return False
+
+    gear = c["gear"].lower()
+    if not gear and cfg.get("assume_automatic"):
+        # CarWale omits transmission and these nameplates are automatic-only in
+        # India, so their variant names ("sDrive18i", "40 TFSI", "220d") never
+        # carry an AT/AMT token. Without this they all drop out silently.
+        gear = "automatic"
+    if cfg["gear"] and gear not in cfg["gear"]:
         return False
     return True
 
@@ -158,7 +261,9 @@ def matches(c, cfg):
 def src_cars24(cfg):
     # filter grammar: field:op:value joined by LITERAL ';'  (encoding breaks it)
     base = [f"transmission:=:automatic", f"odometer:bw:0,{cfg['max_km']}",
-            f"listingPrice:bw:0,{cfg['max_price']}"]
+            f"listingPrice:bw:{cfg.get('min_price', 0)},{cfg['max_price']}"]
+    if cfg.get("min_year"):
+        base.append(f"year:bw:{cfg['min_year']},{THIS_YEAR}")
     # the grammar takes one value per field, so a multi-fuel search is one
     # request per fuel rather than one request with an OR
     fuels = sorted(cfg["fuel"]) if cfg["fuel"] else [None]
@@ -258,6 +363,9 @@ def src_carwale(cfg):
 
             name = g(r'"carName":"([^"]*)"')
             owner = g(r'valuationUrl":"[^"]*?owner=(\d+)')
+            city = g(r'"cityName":"([^"]*)"')
+            if city and city.strip().lower() != "hyderabad":
+                continue          # model pages leak in nearby-city stock
             out.append(rec(
                 site="CarWale", id="cwl-" + m.group(1),
                 year=g(r'"makeYear":(\d+)'), name=name, variant="",
@@ -301,13 +409,15 @@ def src_droom(cfg):
             fuel=g(r'"fuel_type":"([^"]*)"'),
             gear=gear_from_text(trim),
             price=int(g(r'"selling_price":(\d+)', "0")), was=0,
-            url="https://droom.in/o/" + g(r'"listing_alias":"([^"]*)"')))
+            url="https://droom.in/product/" + g(r'"listing_alias":"([^"]*)"')))
     return out
 
 
+# Droom is deliberately absent: its search pages parse fine, but every
+# /product/ detail page returns 403 (curl and a real browser alike), so each
+# listing it contributed was an unopenable link. It matched ~1 car in total.
 SOURCES = [("Cars24", src_cars24), ("Spinny", src_spinny),
-           ("CarDekho", src_cardekho), ("CarWale", src_carwale),
-           ("Droom", src_droom)]
+           ("CarDekho", src_cardekho), ("CarWale", src_carwale)]
 
 # ---------------------------------------------------------------- reporting
 
