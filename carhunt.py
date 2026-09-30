@@ -497,6 +497,7 @@ def dedupe(cars):
         others = [x["site"] for x in g[1:]]
         if others:
             best["also"] = sorted(set(others))
+            best["also_urls"] = [x["url"] for x in g[1:]]
             best["spread"] = g[-1]["price"] - g[0]["price"]
         out.append(best)
     return out

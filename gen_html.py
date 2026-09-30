@@ -191,6 +191,20 @@ details[open] summary::before{content:"▾ "}
   background:var(--accent); color:#fff; border-radius:3px; padding:0 5px;
   font-size:10.5px; letter-spacing:.07em; font-weight:500;
 }
+.picks{
+  margin:0 0 16px; padding:14px 15px; border-radius:9px; max-width:880px;
+  background:var(--surface); border:1px solid var(--line);
+  border-left:3px solid var(--accent); box-shadow:var(--shadow);
+}
+.picks h3{font-family:Archivo,sans-serif; font-size:15px; margin:0 0 4px}
+.picks .sub{margin:0 0 10px; font-size:12.5px; color:var(--muted)}
+.picks ol{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px; font-size:13.5px}
+.picks li b{font-weight:600}
+.picks .why{display:block; padding:0; color:var(--muted); font-size:12.5px}
+.picks .gone{text-decoration:line-through; opacity:.6}
+.picks .tag{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--accent); margin-right:6px}
+.picks .warn{margin:12px 0 0; font-size:13px; color:var(--ink)}
 .note{
   margin:0 0 14px; padding:11px 13px; border-radius:8px; font-size:13px;
   background:var(--surface-2); border:1px solid var(--line);
@@ -291,6 +305,54 @@ NOTES = {
              "driver-assist suite appear here. Confirm the radar and camera on "
              "the car before you rely on it."),
 }
+
+# Hand-picked from the 29 Sep 2026 deep dive. Each pick is matched to the live
+# list by URL, so a sold car is struck through rather than silently vanishing.
+BMW_PICKS = [
+    ("Best overall", "2024 X1 sDrive18i M Sport · 9,500 km · ₹36.0L · Kolkata",
+     "Current-generation X1, one owner, low km, priced about 16% under its peers.",
+     "https://www.carwale.com/used/kolkata/bmw-x1/iejeggnj/"),
+    ("Most car per rupee", "2022 X3 xDrive30i SportX Plus · 25,000 km · ₹37.5L · Ahmedabad",
+     "Class above the X1 with AWD and the 252 hp petrol, for X1 money.",
+     "https://www.cardekho.com/used-car-details/used-Bmw-x3-xdrive30i-sportx-plus-cars-Ahmedabad_c0e5a8ad-7946-4810-829f-62c634a819a3.htm"),
+    ("Nearly new", "2025 X1 sDrive18i M Sport · 8,000 km · ₹40.9L · Chennai",
+     "About a year old; most of the factory warranty should still be left.",
+     "https://www.cardekho.com/used-car-details/used-Bmw-x1-sdrive18i-m-sport-cars-Chennai_cdfb5451-2c4a-44f6-b20b-7cedb8ec8cc4.htm"),
+    ("Certified", "2025 X1 sDrive18i M Sport · 7,678 km · ₹43.9L · Delhi",
+     "BMW Premium Selection: 360° check plus at least 12 months of BMW warranty.",
+     "https://www.bmwusedcars.in/buy-used-cars/delhi/bmw/x1/36290.html"),
+    ("Hyderabad, no transfer", "2024 iX1 xDrive30 M Sport · 11,367 km · ₹43.0L · Jubilee Hills",
+     "Local car, so no re-registration, and EVs were exempt from Telangana road tax "
+     "at the time of writing. Get a battery health report.",
+     "https://www.carwale.com/used/hyderabad/bmw-ix1/ba8k0695/"),
+    ("Budget", "2022 X1 sDrive20i xLine · 12,000 km · ₹23.9L · Noida",
+     "Previous generation, but one owner and low km for ₹12L less.",
+     "https://www.carwale.com/used/noida/bmw-x1/st5r8g5p/"),
+]
+
+
+def picks_html(cars):
+    # a pick can survive as the "also listed" twin of a cheaper duplicate
+    live = {u: c["url"] for c in cars for u in [c["url"], *c.get("also_urls", [])]}
+    items = []
+    for tag, what, why, url in BMW_PICKS:
+        hit = live.get(url)
+        cls = "" if hit else ' class="gone"'
+        link = (f'<a href="{esc(hit)}" target="_blank" rel="noopener">{esc(what)}</a>'
+                if hit else esc(what) + " — no longer listed")
+        items.append(f'<li{cls}><span class="tag">{esc(tag)}</span><b>{link}</b>'
+                     f'<span class="why">{esc(why)}</span></li>')
+    return f"""<div class="picks">
+  <h3>Deep dive: best fits</h3>
+  <p class="sub">Picked by hand on 29 Sep 2026 from every seller above. Struck-through picks have sold.</p>
+  <ol>{''.join(items)}</ol>
+  <p class="warn"><b>Before buying outside Telangana:</b> a BMW registered in another
+    state must be re-registered here, and Telangana's lifetime tax is 18% for cars
+    over ₹20L. That can add several lakh, so get an RTA quote first. For any pick,
+    check VAHAN, the BMW service history by VIN and the insurance no-claim bonus,
+    and get an independent inspection.</p>
+</div>"""
+
 
 # Anything scoring below this is priced badly enough not to be worth your time,
 # so it never reaches the page. It still appears in carhunt.log and state.json.
@@ -411,6 +473,8 @@ def render(groups, out=OUT):
     for key, cfg, cars in groups:
         rows = "".join(row_html(c) for c in cars)
         note = (f'<p class="note">{NOTES[key]}</p>' if key in NOTES else "")
+        if key == "bmw":
+            note = picks_html(cars) + note
         body.append(f"""
 <section class="group" id="{key}">
   <h2>{esc(HEADINGS.get(key, key))} · <span class="count">{len(cars)}</span> listings</h2>
