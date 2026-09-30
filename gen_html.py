@@ -274,8 +274,17 @@ HEADINGS = {
     "subcompact": "Sub-compact SUVs",
     "luxury": "Luxury SUVs",
     "adas": "ADAS-equipped",
+    "bmw": "BMW SUVs · all India",
 }
 NOTES = {
+    "bmw": ("Read from every seller that publishes stock: BMW Premium Selection "
+            "(all BMW dealers' certified cars), Big Boy Toyz, Royal Drive, "
+            "Autobest, Car Street, Luxe Cars, Motorwagon and Motozite, plus "
+            "CarWale, CarDekho and Cars24 nationally - which is where the "
+            "thousands of small independent dealers list. Nothing is hidden "
+            "for a low score here. A certified BMW Premium Selection car "
+            "carries a 12-month-minimum BMW warranty; weigh that against "
+            "a cheaper uncertified twin."),
     "adas": ("ADAS depends on the model year as well as the trim - a Seltos GTX+ "
              "or City ZX from before its facelift wears the same badge with none "
              "of the hardware. Only trims and years that actually shipped a "
@@ -359,7 +368,7 @@ def collect():
     groups = []
     for key, cfg in ch.SEARCHES.items():
         found = {}
-        for _, fn in ch.SOURCES:
+        for _, fn in ch.sources_for(cfg):
             try:
                 for c in fn(cfg):
                     if ch.matches(c, cfg):
@@ -383,8 +392,11 @@ def render(groups, out=OUT):
     for key, cfg, cars in groups:
         cars = sc.score_all(list(cars))
         before = len(cars)
+        # the BMW tab is a census of every seller, so it keeps its overpriced
+        # cars; the local groups drop them
         cars = [c for c in cars
-                if c.get("score") is None or c["score"] >= MIN_SCORE]
+                if cfg.get("national") or c.get("score") is None
+                or c["score"] >= MIN_SCORE]
         cut += before - len(cars)
         cars.sort(key=lambda x: -(x["score"] or 0))
         total += len(cars)
@@ -402,7 +414,7 @@ def render(groups, out=OUT):
         body.append(f"""
 <section class="group" id="{key}">
   <h2>{esc(HEADINGS.get(key, key))} · <span class="count">{len(cars)}</span> listings</h2>
-  <p class="crit">{esc(cfg['label'])} · Hyderabad</p>
+  <p class="crit">{esc(cfg['label'])}{'' if cfg.get('national') else ' · Hyderabad'}</p>
   {note}
   <div class="rows">{rows}</div>
   <p class="empty" hidden>Nothing in this group matches the current filter.</p>
@@ -421,10 +433,10 @@ def render(groups, out=OUT):
 <style>{CSS}</style>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale</p>
+    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · + 8 BMW sellers nationally</p>
     <h1>Hyderabad Car Hunt</h1>
     <p class="lede">Listings matching your saved searches, de-duplicated across
-      four portals and scored against what comparable cars are actually asking.
+      portals and dealers and scored against what comparable cars are actually asking.
       Anything scoring below {MIN_SCORE} is left out. Refreshed {esc(stamp)}.</p>
     <div class="stats">
       <div class="stat"><b>{total}</b><span>listings</span></div>

@@ -133,6 +133,16 @@ SEARCHES = {
                "honda-city", "honda-elevate", "mahindra-xuv-3xo",
                "tata-harrier", "tata-safari", "honda-amaze", "tata-curvv"],
     },
+    # All-India, every seller that can be read - see bmw.py for the sources.
+    # SUV nameplates only, so the 3/5/7 Series and GTs stay out.
+    "bmw": {
+        "label": "BMW SUV, all India, <=30k km, <=Rs 45L",
+        "make": "BMW", "national": True,
+        "models": ["X1", "X2", "X3", "X4", "X5", "X6", "X7", "IX1", "IX3",
+                   "IX", "XM"],
+        "fuel": None, "gear": None,
+        "max_km": 30000, "max_price": 4500000,
+    },
 }
 
 # ---------------------------------------------------------------- helpers
@@ -150,6 +160,14 @@ def get(url, tries=2):
             last = e
             time.sleep(2)
     raise last
+
+
+def post(url, body):
+    req = Request(url, data=body.encode(), headers={
+        "User-Agent": UA, "Accept-Language": "en-IN,en;q=0.9",
+        "Content-Type": "application/x-www-form-urlencoded"})
+    with urlopen(req, timeout=45, context=CTX) as r:
+        return r.read().decode("utf-8", "replace")
 
 
 def rsc(html):
@@ -216,6 +234,8 @@ def _token_re(models):
 
 def matches(c, cfg):
     name = f"{c['name']} {c.get('variant','')}".upper()
+    if cfg.get("make") and cfg["make"] not in name:
+        return False
     # whole-word match: plain substring let "X4" hit "4X4", "Q3" hit "SQ3", etc.
     if not _token_re(cfg["models"]).search(name):
         return False
@@ -419,6 +439,12 @@ def src_droom(cfg):
 SOURCES = [("Cars24", src_cars24), ("Spinny", src_spinny),
            ("CarDekho", src_cardekho), ("CarWale", src_carwale)]
 
+def sources_for(cfg):
+    if cfg.get("national"):
+        import bmw      # here, not at the top: bmw imports this module
+        return bmw.SOURCES
+    return SOURCES
+
 # ---------------------------------------------------------------- reporting
 
 
@@ -443,20 +469,35 @@ def fingerprint(c):
     return (c["year"], tok, c["km"])
 
 
+# Two listings sharing year, model and odometer are one car only if their
+# asking prices sit this close. Dealers round the odometer (20,000 km), so
+# without the price check different cars on round numbers were merged.
+SAME_CAR_PRICE_GAP = 0.08
+
+
 def dedupe(cars):
     """Collapse cross-portal duplicates, keeping the cheapest listing."""
     groups = {}
     for c in cars:
         groups.setdefault(fingerprint(c), []).append(c)
-    out = []
+    clusters = []
     for g in groups.values():
         g.sort(key=lambda x: x["price"])
+        run = [g[0]]
+        for c in g[1:]:
+            if c["price"] <= run[0]["price"] * (1 + SAME_CAR_PRICE_GAP):
+                run.append(c)
+            else:
+                clusters.append(run)
+                run = [c]
+        clusters.append(run)
+    out = []
+    for g in clusters:
         best = dict(g[0])
         others = [x["site"] for x in g[1:]]
         if others:
-            spread = max(x["price"] for x in g) - g[0]["price"]
-            best["also"] = others
-            best["spread"] = spread
+            best["also"] = sorted(set(others))
+            best["spread"] = g[-1]["price"] - g[0]["price"]
         out.append(best)
     return out
 
@@ -489,7 +530,7 @@ def main():
 
     for key, cfg in SEARCHES.items():
         found, notes = {}, []
-        for label, fn in SOURCES:
+        for label, fn in sources_for(cfg):
             try:
                 got = fn(cfg)
             except Exception as e:                    # noqa: BLE001

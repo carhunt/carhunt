@@ -38,6 +38,9 @@ APPROX_NEW = {
     # Luxury SUVs - approximate on-road Hyderabad when new
     "X1": 5500000, "X3": 8500000, "X4": 9500000, "X5": 11500000,
     "X6": 13000000, "X7": 14500000,
+    # BMW EVs. "IX XDRIVE" not "IX": a bare "IX" is inside "SDRIVE20I XLINE"
+    "IX1": 7000000, "IX XDRIVE": 13500000, "IX3": 8000000,
+    "X2": 5000000, "XM": 28000000,
     "GLA": 5800000, "GLB": 7500000, "GLC": 9000000, "GLE": 12500000,
     "GLS": 16500000, "EQB": 8500000,
     "Q2": 5000000, "Q3": 5800000, "Q5": 8000000, "Q7": 10500000,
@@ -88,7 +91,7 @@ def is_ev(car):
     return "electric" in str(car.get("fuel", "")).lower()
 
 
-LUXURY = {"X1","X3","X4","X5","X6","X7","GLA","GLB","GLC","GLE","GLS","EQB",
+LUXURY = {"X1","X2","X3","IX1","IX3","IX XDRIVE","XM","X4","X5","X6","X7","GLA","GLB","GLC","GLE","GLS","EQB",
           "Q2","Q3","Q5","Q7","Q8","WRANGLER","GRAND CHEROKEE","EVOQUE",
           "VELAR","DISCOVERY","DEFENDER","RANGE ROVER"}
 
@@ -211,7 +214,11 @@ def score_all(cars):
             why.append(f"marked down from {rupees(c['was'])} (+3)")
 
         km_per_year = c["km"] / max(c["age"], 0.5)
-        if km_per_year < 4000:
+        if c["age"] >= 4 and km_per_year < 1500:
+            # a 2012 X1 showing 1,234 km is a typo or a wound-back clock
+            c["_bad"] = (f"odometer implausible for a {c['age']}-year-old car "
+                         f"({km_per_year:,.0f} km/yr)")
+        elif km_per_year < 4000:
             s -= 3
             why.append(f"only {km_per_year:,.0f} km/yr - long idle periods (-3)")
         elif km_per_year > 25000:
@@ -236,6 +243,22 @@ def score_all(cars):
 
         if c.get("_peers"):
             why.append(f"baseline blended with {c['_peers']} peers in this list")
+
+        owners_n = int(owners) if owners.isdigit() else 0
+        if owners_n >= 3 and c["age"] <= 2:
+            c["_bad"] = f"{owners_n} owners on a {c['age']}-year-old car"
+        if c.get("_bad"):
+            # the listing data contradicts itself, so any price verdict on it
+            # would be noise - show it, but unrated and at the bottom
+            c["score"], c["tier"], c["value_pct"] = None, "unrated", None
+            c["confidence"] = "listing data inconsistent"
+            c["why"] = [c["_bad"] + " - check the listing before trusting "
+                        "anything on it"] + why
+            continue
+        if c["age"] >= 10:
+            s = min(s, 50)
+            why.append("10+ years old - the price model is unreliable this far "
+                       "back, score capped at 50")
 
         c["confidence"] = ("model peers" if c.get("_peers") else
                            "thin - baseline drawn across models")
