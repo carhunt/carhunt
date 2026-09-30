@@ -52,6 +52,20 @@ launchctl unload ~/Library/LaunchAgents/com.rp.carhunt.plist
 launchctl load   ~/Library/LaunchAgents/com.rp.carhunt.plist
 ```
 
+## All-India BMW tab (`bmw.py`)
+
+The `bmw` search is national and has its own source list (`bmw.SOURCES`, picked
+by `sources_for()` when a search sets `national`). It reads BMW Premium Selection
+(bmwusedcars.in, POST paging), Big Boy Toyz, Royal Drive (JSON API), Autobest,
+Car Street, Luxe Cars, Motorwagon, Motozite, and CarWale/CarDekho/Cars24 across
+~15 cities. It adds ~4 minutes to each run.
+
+Quirks: CarWale takes `?budget=0-45&kms=0-30` (kms in thousands) but serves only
+two pages per URL, so deep models are split by city. CarDekho ignores every
+filter and serves 20 cars per URL, so X1/X3/iX1 are split by city. Spinny's API
+holds no BMW stock and is skipped. Motozite and Car Street expose only their
+newest page. OLX blocks plain clients; Droom detail pages 403.
+
 ## Sources
 
 | Portal | Access | Filtering | Notes |
