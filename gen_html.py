@@ -289,8 +289,18 @@ HEADINGS = {
     "luxury": "Luxury SUVs",
     "adas": "ADAS-equipped",
     "bmw": "BMW SUVs · all India",
+    "ml350": "ML 350 CDI · facelift base",
 }
 NOTES = {
+    "ml350": ("Base car for the GLE facelift conversion: an ML 350 CDI (3.0 V6 "
+              "diesel, 258 hp) with at least ₹5L of the ₹25–30L all-in cap left "
+              "for the work. Read nationally from CarWale, CarDekho and Cars24; "
+              "Spinny, Big Boy Toyz and Royal Drive held none. Prefer a "
+              "Hyderabad (TS) car - one from another state is re-registered "
+              "here at Telangana's lifetime tax rate, which can sink the budget. "
+              "A 2012 car can still be the older W164, which does not take GLE "
+              "parts: confirm W166 by VIN. Check Airmatic, the oil-cooler seals "
+              "and the AdBlue system before buying."),
     "bmw": ("Read from every seller that publishes stock: BMW Premium Selection "
             "(all BMW dealers' certified cars), Big Boy Toyz, Royal Drive, "
             "Autobest, Car Street, Luxe Cars, Motorwagon and Motozite, plus "
@@ -454,8 +464,8 @@ def render(groups, out=OUT):
     for key, cfg, cars in groups:
         cars = sc.score_all(list(cars))
         before = len(cars)
-        # the BMW tab is a census of every seller, so it keeps its overpriced
-        # cars; the local groups drop them
+        # the national tabs (BMW, ML 350) are a census of every seller, so
+        # they keep their overpriced cars; the local groups drop them
         cars = [c for c in cars
                 if cfg.get("national") or c.get("score") is None
                 or c["score"] >= MIN_SCORE]
@@ -497,7 +507,7 @@ def render(groups, out=OUT):
 <style>{CSS}</style>
 <div class="wrap">
   <header>
-    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · + 8 BMW sellers nationally</p>
+    <p class="eyebrow">Cars24 · Spinny · CarDekho · CarWale · + 8 BMW sellers and ML 350s nationally</p>
     <h1>Hyderabad Car Hunt</h1>
     <p class="lede">Listings matching your saved searches, de-duplicated across
       portals and dealers and scored against what comparable cars are actually asking.
@@ -544,7 +554,8 @@ def render(groups, out=OUT):
     </p>
     <p>Everything here sits inside your limits: ₹20L for a seven-seater and
       ₹11L for a sub-compact, both under 30,000 km; ₹25–40L for a luxury SUV,
-      2023 or newer and under 40,000 km. Electric cars are included on the same
+      2023 or newer and under 40,000 km; ₹20L for an ML 350 CDI from 2012 on,
+      under 1.2 lakh km, anywhere in India. Electric cars are included on the same
       terms rather than in a group of their own — if an EV does not clear the
       cap, it does not appear. Anything scoring under {MIN_SCORE} is dropped
       before the page is written.</p>

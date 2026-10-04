@@ -250,7 +250,7 @@ CARWALE_CITIES = ["delhi", "gurgaon", "noida", "mumbai", "navi-mumbai",
                   "lucknow", "surat", "indore", "coimbatore"]
 
 
-def _carwale_page(url, out):
+def _carwale_page(url, out, make="BMW"):
     """Parse one CarWale listing page into out; return (new cars, totalCount)."""
     blob = ch.rsc(ch.get(url))
     total = int((re.findall(r'"totalCount":"?(\d+)', blob) or ["0"])[0])
@@ -263,7 +263,7 @@ def _carwale_page(url, out):
             return mm.group(1) if mm else d
 
         name = g(r'"carName":"([^"]*)"')
-        if "BMW" not in name.upper() or m.group(1) in out:
+        if make not in name.upper() or m.group(1) in out:
             continue
         fresh += 1
         city = g(r'"cityName":"([^"]*)"')

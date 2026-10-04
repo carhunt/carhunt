@@ -143,6 +143,16 @@ SEARCHES = {
         "fuel": None, "gear": None,
         "max_km": 30000, "max_price": 4500000,
     },
+    # Base car for the GLE facelift conversion - see ml.py. W166 only: the
+    # W164 ML 350 CDI ran to 2011, and from late 2015 the car is badged GLE.
+    # Rs 20L keeps at least Rs 5L of the Rs 25-30L all-in cap for the work.
+    "ml350": {
+        "label": "Mercedes ML 350 CDI (W166), all India, 2012+, <=1.2 lakh km, <=Rs 20L",
+        "make": "MERCEDES", "national": True, "sources": "ml",
+        "models": ["ML 350"], "min_year": 2012,
+        "fuel": {"diesel"}, "gear": None,
+        "max_km": 120000, "max_price": 2000000,
+    },
 }
 
 # ---------------------------------------------------------------- helpers
@@ -440,6 +450,9 @@ SOURCES = [("Cars24", src_cars24), ("Spinny", src_spinny),
            ("CarDekho", src_cardekho), ("CarWale", src_carwale)]
 
 def sources_for(cfg):
+    if cfg.get("sources") == "ml":
+        import ml       # here, not at the top: ml imports this module
+        return ml.SOURCES
     if cfg.get("national"):
         import bmw      # here, not at the top: bmw imports this module
         return bmw.SOURCES

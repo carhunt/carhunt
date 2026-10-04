@@ -43,6 +43,8 @@ APPROX_NEW = {
     "X2": 5000000, "XM": 28000000,
     "GLA": 5800000, "GLB": 7500000, "GLC": 9000000, "GLE": 12500000,
     "GLS": 16500000, "EQB": 8500000,
+    # 2012-15 ML 350 CDI on-road when new; every ML row is renamed to this
+    "ML 350": 7200000,
     "Q2": 5000000, "Q3": 5800000, "Q5": 8000000, "Q7": 10500000,
     "Q8": 13500000,
     "COMPASS": 3200000, "MERIDIAN": 4200000, "WRANGLER": 7500000,
@@ -91,7 +93,7 @@ def is_ev(car):
     return "electric" in str(car.get("fuel", "")).lower()
 
 
-LUXURY = {"X1","X2","X3","IX1","IX3","IX XDRIVE","XM","X4","X5","X6","X7","GLA","GLB","GLC","GLE","GLS","EQB",
+LUXURY = {"X1","X2","X3","IX1","IX3","IX XDRIVE","XM","X4","X5","X6","X7","GLA","GLB","GLC","GLE","GLS","EQB","ML 350",
           "Q2","Q3","Q5","Q7","Q8","WRANGLER","GRAND CHEROKEE","EVOQUE",
           "VELAR","DISCOVERY","DEFENDER","RANGE ROVER"}
 

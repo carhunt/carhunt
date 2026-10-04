@@ -66,6 +66,16 @@ filter and serves 20 cars per URL, so X1/X3/iX1 are split by city. Spinny's API
 holds no BMW stock and is skipped. Motozite and Car Street expose only their
 newest page. OLX blocks plain clients; Droom detail pages 403.
 
+## All-India ML 350 CDI tab (`ml.py`)
+
+Base car for the GLE facelift conversion project: Mercedes ML 350 CDI (W166),
+2012+, <=1.2 lakh km, <=Rs 20L, diesel, anywhere in India. Picked by
+`sources_for()` when a search sets `"sources": "ml"`. Reads CarWale (national,
+city split past 50), CarDekho (per city, 20-car cap) and Cars24 (city
+`ml-class` pages). Spinny, Big Boy Toyz and Royal Drive held no M-Class in Oct
+2026. Every record is renamed "Mercedes-Benz ML 350" so matching, dedupe and
+the `ML 350` score anchor see one name; the portal wording stays as the variant.
+
 ## Sources
 
 | Portal | Access | Filtering | Notes |
