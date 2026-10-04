@@ -5,3 +5,4 @@ carhunt.log
 carhunt.log.*.bak
 launchd.out
 launchd.err
+reg_cache.json

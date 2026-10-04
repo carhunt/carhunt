@@ -66,6 +66,16 @@ filter and serves 20 cars per URL, so X1/X3/iX1 are split by city. Spinny's API
 holds no BMW stock and is skipped. Motozite and Car Street expose only their
 newest page. OLX blocks plain clients; Droom detail pages 403.
 
+## Registration state (`registration.py`)
+
+Every car gets a plate badge: green = Telangana (TS/TG, plus pre-2014 AP codes
+from Telangana districts such as AP28), red = another state (re-registration
+tax on the original invoice), dashed "plate ?" = seller does not publish it.
+Cars24/Spinny/BBT/Royal Drive carry the RTO in listing data; CarWale and
+CarDekho only on the detail page, which is fetched once per car and cached in
+`reg_cache.json` (gitignored, state+RTO prefix only, never the full plate). The
+page's "Telangana only" toggle filters on it.
+
 ## BMW facelift-base tab (`bmw_facelift`)
 
 Pre-facelift X3/X5 (no X1, by request) for the facelift project, <=Rs 20L, <=1.2 lakh km, read

@@ -157,6 +157,9 @@ button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visib
   border:1px solid var(--line); border-radius:3px; padding:0 4px;
   letter-spacing:.03em; color:var(--ink);
 }
+.meta .plate.ts{border-color:var(--strong); color:var(--strong); background:var(--strong-bg)}
+.meta .plate.other{border-color:var(--rich); color:var(--rich); background:var(--rich-bg)}
+.meta .plate.unknown{color:var(--muted); border-style:dashed}
 .price{text-align:right; white-space:nowrap}
 .price b{
   font-family:Archivo,sans-serif; font-size:20px; font-weight:700;
@@ -251,6 +254,7 @@ const groups = Array.from(document.querySelectorAll('.group'));
 
 function apply(){
   const tier = document.querySelector('.seg[data-role=tier] button[aria-pressed=true]').dataset.tier;
+  const reg = document.querySelector('.seg[data-role=reg] button[aria-pressed=true]').dataset.reg;
   const want = document.querySelector('.seg[data-role=group] button[aria-pressed=true]').dataset.group;
   const sort = document.getElementById('sort').value;
   groups.forEach(g => {
@@ -259,7 +263,8 @@ function apply(){
     const list = g.querySelector('.rows');
     const kids = Array.from(list.children);
     kids.forEach(r => {
-      r.hidden = !(tier === 'all' || r.dataset.tier === tier);
+      r.hidden = !(tier === 'all' || r.dataset.tier === tier)
+              || !(reg === 'all' || r.dataset.reg === reg);
     });
     kids.sort((a,b) => {
       const n = k => parseFloat(k.dataset[sort] || 0);
@@ -399,8 +404,17 @@ def row_html(c):
         meta.append(f"{c['age']}y old")
     meta_html = ('<span class="ev">EV</span>' if c.get("ev") else "")
     meta_html += "".join(f"<span>{m}</span>" for m in meta)
-    if c.get("rto"):
-        meta_html += f'<span class="plate">{esc(c["rto"])}</span>'
+    reg = c.get("reg") or "unknown"
+    if reg == "ts":
+        meta_html += (f'<span class="plate ts" title="Telangana registration - no '
+                      f're-registration tax">{esc(c["reg_label"])}</span>')
+    elif reg == "other":
+        meta_html += (f'<span class="plate other" title="Registered outside '
+                      f'Telangana - re-registering here costs lifetime tax on the '
+                      f'original invoice">{esc(c["reg_label"])} · re-reg tax</span>')
+    else:
+        meta_html += ('<span class="plate unknown" title="Seller does not publish '
+                      'the registration - ask before you go">plate ?</span>')
     if c.get("where"):
         meta_html += f"<span>{esc(c['where'][:34])}</span>"
 
@@ -422,7 +436,7 @@ def row_html(c):
 
     label = "deal" if score is not None else "n/a"
     return f"""
-<article class="row" data-tier="{tier}" data-score="{score or 0}"
+<article class="row" data-tier="{tier}" data-reg="{c.get('reg') or 'unknown'}" data-score="{score or 0}"
          data-price="{c['price']}" data-km="{c['km']}" data-year="{c['year'] or 0}">
   <div class="head">
     <div class="score"><b>{score if score is not None else '—'}</b><span>{label}</span></div>
@@ -468,6 +482,12 @@ def render(groups, out=OUT):
     carhunt hands over the cars it has just fetched, so the scheduled run hits
     each portal once per cycle instead of twice.
     """
+    # registration state for every car (cached; fetches only new listings)
+    import registration
+    try:
+        registration.enrich(groups)
+    except Exception as e:                            # noqa: BLE001
+        print(f"registration lookup failed: {type(e).__name__}: {e}")
     total = strong = evs = 0
     cheapest_seven = None
     scored = []
@@ -543,6 +563,10 @@ def render(groups, out=OUT):
       <button data-tier="fair" aria-pressed="false">Fair</button>
       <button data-tier="rich" aria-pressed="false">Rich</button>
     </div>
+    <div class="seg" data-role="reg" role="group" aria-label="Filter by registration state">
+      <button data-reg="all" aria-pressed="true">Any state</button>
+      <button data-reg="ts" aria-pressed="false" title="Only cars with a Telangana plate (incl. pre-2014 Telangana AP codes) - no re-registration tax">Telangana only</button>
+    </div>
     <span class="spacer"></span>
     <label class="sort" for="sort">Sort
       <select id="sort">
@@ -597,6 +621,13 @@ def render(groups, out=OUT):
       whether a Tata's 8-year / 1.6-lakh-km battery warranty transfers, and for
       an MG Windsor confirm it was not sold under BaaS, where the battery is
       rented and the per-km fee continues after you buy.</p>
+    <p><strong>Registration.</strong> Each car carries its plate's state:
+      green is Telangana (including pre-2014 Telangana AP codes such as AP28),
+      red is another state, and a dashed "plate ?" means the seller does not
+      publish it. A car from another state must be re-registered here, and
+      Telangana charges lifetime tax on its <em>original invoice</em>, reduced
+      only by age - several lakh on a luxury SUV, with nothing credited for tax
+      paid elsewhere. "Telangana only" hides everything else.</p>
     <p><strong>The score reads price only.</strong> It knows nothing about
       accident history, service records or hypothecation. Nothing here is a
       valuation or advice — verify on VAHAN, check the insurance NCB for claim
