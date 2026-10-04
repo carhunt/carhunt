@@ -68,10 +68,9 @@ newest page. OLX blocks plain clients; Droom detail pages 403.
 
 ## BMW facelift-base tab (`bmw_facelift`)
 
-Pre-facelift X1/X3/X5 for the facelift project, <=Rs 20L, <=1.2 lakh km, read
+Pre-facelift X3/X5 (no X1, by request) for the facelift project, <=Rs 20L, <=1.2 lakh km, read
 from the same `bmw.SOURCES`. `year_windows` in the search config holds each
-model to its pre-facelift years (X5 F15 2014-18, X3 2011-14 and 2018-21, X1
-2016-19); `matches()` enforces it. Sellers that ignore price/km limits are
+model to its pre-facelift years (X5 F15 2014-18, X3 2011-14 and 2018-21); `matches()` enforces it. Sellers that ignore price/km limits are
 wrapped in `once_per_run`, so the second BMW search reuses their fetch and only
 Cars24, Spinny and CarWale run twice.
 

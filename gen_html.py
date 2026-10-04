@@ -299,9 +299,9 @@ NOTES = {
                      "258 hp), but it never had a real facelift - the only "
                      "upgrade is a G05-look kit. X3 F25 2011–14 or G01 2018–21: "
                      "genuine pre- to post-facelift conversions; a G01 under "
-                     "₹20L will be rare and high-km. X1 F48 2016–19: cheapest "
-                     "real conversion, weakest engine. Year edges overlap the "
-                     "old models (a 2014 X5 can be an E70, a 2016 X1 an E84): "
+                     "₹20L will be rare and high-km. X1 is left out. Year "
+                     "edges overlap the old models (a 2014 X5 can be an E70, "
+                     "a 2014 X3 already the facelifted F25): "
                      "confirm the chassis by VIN. Same sellers as the BMW tab."),
     "ml350": ("Base car for the GLE facelift conversion: an ML 350 CDI (3.0 V6 "
               "diesel, 258 hp) with at least ₹5L of the ₹25–30L all-in cap left "
@@ -567,7 +567,7 @@ def render(groups, out=OUT):
       ₹11L for a sub-compact, both under 30,000 km; ₹25–40L for a luxury SUV,
       2023 or newer and under 40,000 km; ₹20L for an ML 350 CDI from 2012 on,
       under 1.2 lakh km, anywhere in India, and the same for a pre-facelift
-      X1, X3 or X5. Electric cars are included on the same
+      X3 or X5. Electric cars are included on the same
       terms rather than in a group of their own — if an EV does not clear the
       cap, it does not appear. Anything scoring under {MIN_SCORE} is dropped
       before the page is written.</p>

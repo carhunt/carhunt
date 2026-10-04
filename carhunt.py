@@ -149,12 +149,12 @@ SEARCHES = {
     # already-facelifted car never shows up as a conversion base.
     "bmw_facelift": {
         "label": "BMW facelift base, all India, <=1.2 lakh km, <=Rs 20L: "
-                 "X5 F15 2014-18, X3 F25 2011-14 / G01 2018-21, X1 F48 2016-19",
+                 "X5 F15 2014-18, X3 F25 2011-14 / G01 2018-21",
         "make": "BMW", "national": True,
-        "models": ["X1", "X3", "X5"],
+        # X1 left out at the user's request: too small and too weak for this
+        "models": ["X3", "X5"],
         "year_windows": {"X5": [(2014, 2018)],
-                         "X3": [(2011, 2014), (2018, 2021)],
-                         "X1": [(2016, 2019)]},
+                         "X3": [(2011, 2014), (2018, 2021)]},
         "fuel": None, "gear": None,
         "max_km": 120000, "max_price": 2000000,
     },
