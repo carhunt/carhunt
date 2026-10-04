@@ -90,7 +90,24 @@ def _cards(page, link_re):
 
 # ------------------------------------------------------------------ portals
 
+# Two searches ("bmw" and "bmw_facelift") read these sellers in one run. A
+# source that ignores the search's limits returns the same stock both times,
+# so it is fetched once per run and reused. Cars24, Spinny and CarWale filter
+# on price and km server-side, so they run per search.
+_CACHE = {}
 
+
+def once_per_run(fn):
+    def wrapped(cfg):
+        if fn not in _CACHE:
+            _CACHE[fn] = fn(cfg)
+        return [dict(c) for c in _CACHE[fn]]
+    wrapped.__name__ = fn.__name__
+    return wrapped
+
+
+
+@once_per_run
 def src_bmw_official(cfg):
     """bmwusedcars.in - BMW India's own certified-used site, all dealers."""
     out = []
@@ -120,6 +137,7 @@ def src_bmw_official(cfg):
     return out
 
 
+@once_per_run
 def src_bigboytoyz(cfg):
     out = {}
     for slug in ["x1", "x3", "x4", "x5", "x6", "x7", "bmw-ix"]:
@@ -216,6 +234,7 @@ def src_spinny(cfg):
     return list(out.values())
 
 
+@once_per_run
 def src_cardekho(cfg):
     out = {}
     for model in MODELS:
@@ -311,6 +330,7 @@ def src_carwale(cfg):
 # ------------------------------------------------------------------ dealers
 
 
+@once_per_run
 def src_royaldrive(cfg):
     data = json.loads(ch.get(
         "https://api-cust.royaldrive.in/api/allvehicles?page=1&limit=1000"))
@@ -379,7 +399,7 @@ def make_card_source(label, page_url, link_re, base, where):
                 out.append(r)
         return out
     src.__name__ = "src_" + re.sub(r"\W", "", label.lower())
-    return src
+    return once_per_run(src)
 
 
 SOURCES = [

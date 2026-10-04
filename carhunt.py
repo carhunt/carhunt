@@ -143,6 +143,21 @@ SEARCHES = {
         "fuel": None, "gear": None,
         "max_km": 30000, "max_price": 4500000,
     },
+    # BMW alternatives for the facelift project, read from the same sellers as
+    # the "bmw" tab. Each model is held to the years that are still pre-facelift
+    # (or, for the X5 F15, the only generation that fits the budget), so an
+    # already-facelifted car never shows up as a conversion base.
+    "bmw_facelift": {
+        "label": "BMW facelift base, all India, <=1.2 lakh km, <=Rs 20L: "
+                 "X5 F15 2014-18, X3 F25 2011-14 / G01 2018-21, X1 F48 2016-19",
+        "make": "BMW", "national": True,
+        "models": ["X1", "X3", "X5"],
+        "year_windows": {"X5": [(2014, 2018)],
+                         "X3": [(2011, 2014), (2018, 2021)],
+                         "X1": [(2016, 2019)]},
+        "fuel": None, "gear": None,
+        "max_km": 120000, "max_price": 2000000,
+    },
     # Base car for the GLE facelift conversion - see ml.py. W166 only: the
     # W164 ML 350 CDI ran to 2011, and from late 2015 the car is badged GLE.
     # Rs 20L keeps at least Rs 5L of the Rs 25-30L all-in cap for the work.
@@ -256,6 +271,16 @@ def matches(c, cfg):
             if int(c["year"]) < cfg["min_year"]:
                 return False
         except (TypeError, ValueError):
+            return False
+    windows = cfg.get("year_windows")
+    if windows:
+        model = next((m for m in windows
+                      if re.search(r"\b" + m + r"\b", name)), None)
+        try:
+            yr = int(c["year"])
+        except (TypeError, ValueError):
+            return False
+        if not model or not any(a <= yr <= b for a, b in windows[model]):
             return False
     if not (0 < c["km"] <= cfg["max_km"]):
         return False

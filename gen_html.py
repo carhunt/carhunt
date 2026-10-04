@@ -290,8 +290,19 @@ HEADINGS = {
     "adas": "ADAS-equipped",
     "bmw": "BMW SUVs · all India",
     "ml350": "ML 350 CDI · facelift base",
+    "bmw_facelift": "BMW · facelift base",
 }
 NOTES = {
+    "bmw_facelift": ("BMW alternatives to the ML 350 for the facelift project, "
+                     "held to pre-facelift years and ₹20L so the ₹25–30L all-in "
+                     "cap survives. X5 xDrive30d F15: best engine (3.0 six, "
+                     "258 hp), but it never had a real facelift - the only "
+                     "upgrade is a G05-look kit. X3 F25 2011–14 or G01 2018–21: "
+                     "genuine pre- to post-facelift conversions; a G01 under "
+                     "₹20L will be rare and high-km. X1 F48 2016–19: cheapest "
+                     "real conversion, weakest engine. Year edges overlap the "
+                     "old models (a 2014 X5 can be an E70, a 2016 X1 an E84): "
+                     "confirm the chassis by VIN. Same sellers as the BMW tab."),
     "ml350": ("Base car for the GLE facelift conversion: an ML 350 CDI (3.0 V6 "
               "diesel, 258 hp) with at least ₹5L of the ₹25–30L all-in cap left "
               "for the work. Read nationally from CarWale, CarDekho and Cars24; "
@@ -464,7 +475,7 @@ def render(groups, out=OUT):
     for key, cfg, cars in groups:
         cars = sc.score_all(list(cars))
         before = len(cars)
-        # the national tabs (BMW, ML 350) are a census of every seller, so
+        # the national tabs (BMW, BMW facelift, ML 350) are a census of every seller, so
         # they keep their overpriced cars; the local groups drop them
         cars = [c for c in cars
                 if cfg.get("national") or c.get("score") is None
@@ -555,7 +566,8 @@ def render(groups, out=OUT):
     <p>Everything here sits inside your limits: ₹20L for a seven-seater and
       ₹11L for a sub-compact, both under 30,000 km; ₹25–40L for a luxury SUV,
       2023 or newer and under 40,000 km; ₹20L for an ML 350 CDI from 2012 on,
-      under 1.2 lakh km, anywhere in India. Electric cars are included on the same
+      under 1.2 lakh km, anywhere in India, and the same for a pre-facelift
+      X1, X3 or X5. Electric cars are included on the same
       terms rather than in a group of their own — if an EV does not clear the
       cap, it does not appear. Anything scoring under {MIN_SCORE} is dropped
       before the page is written.</p>
