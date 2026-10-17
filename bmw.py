@@ -1,5 +1,5 @@
 """
-All-India BMW SUV sources for the "bmw" search.
+All-India BMW sources for the "bmw" (SUV) and "bmw_facelift" searches.
 
 The Hyderabad searches read four portals for one city. This one is national and
 reaches past the portals to the sellers who hold most used-BMW stock:
@@ -29,6 +29,8 @@ import carhunt as ch
 # URL slugs per portal. X7/iX/XM never clear Rs 45L with <30k km, but they cost
 # a request each and a price cut would otherwise go unseen.
 MODELS = ["x1", "x3", "x4", "x5", "x6", "x7", "ix1", "ix"]
+# sedans, for the facelift tab only (cfg "sedans")
+SEDANS = ["3-series", "5-series", "7-series"]
 
 CARS24_CITIES = ["new-delhi", "gurgaon", "noida", "mumbai", "bangalore",
                  "hyderabad", "chennai", "pune", "kolkata", "ahmedabad",
@@ -42,7 +44,7 @@ SPINNY_CITIES = ["delhi-ncr", "mumbai", "bangalore", "hyderabad", "pune",
 CARDEKHO_CITIES = ["india", "new-delhi", "gurgaon", "noida", "mumbai",
                    "bangalore", "hyderabad", "chennai", "pune", "kolkata",
                    "ahmedabad", "chandigarh", "jaipur", "kochi", "lucknow"]
-CARDEKHO_DEEP = {"x1", "x3", "ix1"}       # city split only where stock is deep
+CARDEKHO_DEEP = {"x1", "x3", "ix1", "3-series", "5-series"}       # city split only where stock is deep
 
 LAKH = re.compile(r"₹\s*([\d.]+)\s*(L|LAKHS?|LAC|CR)\b", re.I)
 RUPEE = re.compile(r"₹\s*([\d,]{6,})")
@@ -140,7 +142,7 @@ def src_bmw_official(cfg):
 @once_per_run
 def src_bigboytoyz(cfg):
     out = {}
-    for slug in ["x1", "x3", "x4", "x5", "x6", "x7", "bmw-ix"]:
+    for slug in ["x1", "x3", "x4", "x5", "x6", "x7", "bmw-ix", *SEDANS]:
         try:
             blob = ch.rsc(ch.get(f"https://www.bigboytoyz.com/buy-used-bmw-cars-{slug}"))
         except Exception:                                # noqa: BLE001
@@ -237,7 +239,7 @@ def src_spinny(cfg):
 @once_per_run
 def src_cardekho(cfg):
     out = {}
-    for model in MODELS:
+    for model in MODELS + SEDANS:
         cities = CARDEKHO_CITIES if model in CARDEKHO_DEEP else ["india"]
         for city in cities:
             url = f"https://www.cardekho.com/used-bmw-{model}-cars+in+{city}"
@@ -309,7 +311,7 @@ def src_carwale(cfg):
     q = (f"?budget=0-{cfg['max_price'] // 100000}"
          f"&kms=0-{cfg['max_km'] // 1000}")      # kms is in thousands
     out = {}
-    for model in MODELS:
+    for model in MODELS + (SEDANS if cfg.get("sedans") else []):
         try:
             _, total = _carwale_page(f"https://www.carwale.com/used/india/bmw-{model}/{q}", out)
             _carwale_page(f"https://www.carwale.com/used/india/bmw-{model}/page-2/{q}", out)

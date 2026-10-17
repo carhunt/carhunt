@@ -295,19 +295,22 @@ HEADINGS = {
     "adas": "ADAS-equipped",
     "bmw": "BMW SUVs · all India",
     "ml350": "ML 350 CDI · facelift base",
-    "bmw_facelift": "BMW · facelift base",
+    "bmw_facelift": "BMW SUV + sedan · facelift base",
 }
 NOTES = {
-    "bmw_facelift": ("BMW alternatives to the ML 350 for the facelift project, "
-                     "held to pre-facelift years and ₹20L so the ₹25–30L all-in "
-                     "cap survives. X5 xDrive30d F15: best engine (3.0 six, "
-                     "258 hp), but it never had a real facelift - the only "
-                     "upgrade is a G05-look kit. X3 F25 2011–14 or G01 2018–21: "
-                     "genuine pre- to post-facelift conversions; a G01 under "
-                     "₹20L will be rare and high-km. X1 is left out. Year "
-                     "edges overlap the old models (a 2014 X5 can be an E70, "
-                     "a 2014 X3 already the facelifted F25): "
-                     "confirm the chassis by VIN. Same sellers as the BMW tab."),
+    "bmw_facelift": ("BMW bases for the facelift project, SUVs and sedans, "
+                     "held to pre-facelift years. Budget is ₹15L all-in (car + "
+                     "conversion), so anything near the ₹20L ceiling here is "
+                     "over. 5 Series F10 530d (2010–13): the pick - 3.0 six, "
+                     "pre-LCI to LCI. 3 Series F30 (2012–15): pre-LCI to LCI, "
+                     "4-cyl only in budget. 7 Series F01 (2009–12): pre-LCI to "
+                     "LCI, cheap but old. 5 Series G30 2017–20 rarely fits. "
+                     "X5 F15: best SUV engine, but no real facelift - only a "
+                     "G05-look kit. X3 F25 2011–14 / G01 2018–21. X1 left out. "
+                     "A 2010–11 car is due for its 15-year RC renewal. Year "
+                     "edges overlap generations (a 2013 5 Series can already be "
+                     "the LCI): confirm the chassis by VIN. Telangana plates "
+                     "only - other states cost ~₹4L to re-register."),
     "ml350": ("Base car for the GLE facelift conversion: an ML 350 CDI (3.0 V6 "
               "diesel, 258 hp) with at least ₹5L of the ₹25–30L all-in cap left "
               "for the work. Read nationally from CarWale, CarDekho and Cars24; "

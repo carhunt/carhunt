@@ -149,12 +149,24 @@ SEARCHES = {
     # already-facelifted car never shows up as a conversion base.
     "bmw_facelift": {
         "label": "BMW facelift base, all India, <=1.2 lakh km, <=Rs 20L: "
-                 "X5 F15 2014-18, X3 F25 2011-14 / G01 2018-21",
-        "make": "BMW", "national": True,
+                 "X5 F15 2014-18, X3 F25 2011-14 / G01 2018-21, "
+                 "3 Series F30 2012-15, 5 Series F10 2010-13 / G30 2017-20, "
+                 "7 Series F01 2009-12",
+        "make": "BMW", "national": True, "sedans": True,
         # X1 left out at the user's request: too small and too weak for this
-        "models": ["X3", "X5"],
+        "models": ["X3", "X5", "3 SERIES", "5 SERIES", "7 SERIES"],
+        # sellers name sedans either by series ("3 Series", "3-Series") or by
+        # variant alone ("BMW 320d", "BMW 730Ld DPE")
+        "model_res": {
+            "3 SERIES": r"\b3[ -]SERIES\b|\b3[1-3]\dL?[DI]\b",
+            "5 SERIES": r"\b5[ -]SERIES\b|\b5[2-5]\dL?[DI]\b",
+            "7 SERIES": r"\b7[ -]SERIES\b|\b7[3-6]\dL?[DI]\b",
+        },
         "year_windows": {"X5": [(2014, 2018)],
-                         "X3": [(2011, 2014), (2018, 2021)]},
+                         "X3": [(2011, 2014), (2018, 2021)],
+                         "3 SERIES": [(2012, 2015)],
+                         "5 SERIES": [(2010, 2013), (2017, 2020)],
+                         "7 SERIES": [(2009, 2012)]},
         "fuel": None, "gear": None,
         "max_km": 120000, "max_price": 2000000,
     },
@@ -249,11 +261,15 @@ def rec(**kw):
 _TOKEN_CACHE = {}
 
 
-def _token_re(models):
-    key = id(models)
+def _model_re(cfg, model):
+    return cfg.get("model_res", {}).get(model, r"\b" + re.escape(model) + r"\b")
+
+
+def _token_re(cfg):
+    key = id(cfg)
     if key not in _TOKEN_CACHE:
         _TOKEN_CACHE[key] = re.compile(
-            "|".join(r"\b" + re.escape(m) + r"\b" for m in models))
+            "|".join(_model_re(cfg, m) for m in cfg["models"]))
     return _TOKEN_CACHE[key]
 
 
@@ -262,7 +278,7 @@ def matches(c, cfg):
     if cfg.get("make") and cfg["make"] not in name:
         return False
     # whole-word match: plain substring let "X4" hit "4X4", "Q3" hit "SQ3", etc.
-    if not _token_re(cfg["models"]).search(name):
+    if not _token_re(cfg).search(name):
         return False
     if not (cfg.get("min_price", 1) <= c["price"] <= cfg["max_price"]):
         return False
@@ -275,7 +291,7 @@ def matches(c, cfg):
     windows = cfg.get("year_windows")
     if windows:
         model = next((m for m in windows
-                      if re.search(r"\b" + m + r"\b", name)), None)
+                      if re.search(_model_re(cfg, m), name)), None)
         try:
             yr = int(c["year"])
         except (TypeError, ValueError):
