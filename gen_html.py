@@ -8,6 +8,7 @@ from datetime import datetime
 
 import carhunt as ch
 import score as sc
+import engines
 
 # argv may belong to carhunt (which imports this module), so only take a real
 # path, never a flag
@@ -208,6 +209,16 @@ details[open] summary::before{content:"▾ "}
 .picks .tag{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em;
   text-transform:uppercase; color:var(--accent); margin-right:6px}
 .picks .warn{margin:12px 0 0; font-size:13px; color:var(--ink)}
+.meta .eng{border-radius:3px; padding:0 5px; font-weight:500; cursor:help}
+.meta .eng.rec{color:var(--strong); background:var(--strong-bg)}
+.meta .eng.ok{color:var(--fair); background:var(--fair-bg)}
+.meta .eng.avoid{color:var(--rich); background:var(--rich-bg)}
+.meta .eng.check{color:var(--muted); border:1px dashed var(--line)}
+.meta .eng.ev{display:none}
+.why .engline{font-size:13px; margin:0}
+.why .engline b{font-weight:600}
+.picks .vrec{color:var(--strong)} .picks .vavoid{color:var(--rich)}
+.picks ul.live{margin:6px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:3px}
 .note{
   margin:0 0 14px; padding:11px 13px; border-radius:8px; font-size:13px;
   background:var(--surface-2); border:1px solid var(--line);
@@ -255,6 +266,7 @@ const groups = Array.from(document.querySelectorAll('.group'));
 function apply(){
   const tier = document.querySelector('.seg[data-role=tier] button[aria-pressed=true]').dataset.tier;
   const reg = document.querySelector('.seg[data-role=reg] button[aria-pressed=true]').dataset.reg;
+  const eng = document.querySelector('.seg[data-role=eng] button[aria-pressed=true]').dataset.eng;
   const want = document.querySelector('.seg[data-role=group] button[aria-pressed=true]').dataset.group;
   const sort = document.getElementById('sort').value;
   groups.forEach(g => {
@@ -264,7 +276,9 @@ function apply(){
     const kids = Array.from(list.children);
     kids.forEach(r => {
       r.hidden = !(tier === 'all' || r.dataset.tier === tier)
-              || !(reg === 'all' || r.dataset.reg === reg);
+              || !(reg === 'all' || r.dataset.reg === reg)
+              || (eng === 'rec' && r.dataset.eng !== 'rec')
+              || (eng === 'noavoid' && r.dataset.eng === 'avoid');
     });
     kids.sort((a,b) => {
       const n = k => parseFloat(k.dataset[sort] || 0);
@@ -303,17 +317,18 @@ NOTES = {
                      "conversion), so anything near the ₹20L ceiling here is "
                      "over. 5 Series F10 530d (2010–13): the pick - 3.0 six, "
                      "pre-LCI to LCI. 3 Series F30 (2012–15): pre-LCI to LCI, "
-                     "4-cyl only in budget. 7 Series F01 (2009–12): pre-LCI to "
+                     "4-cyl N47 only in budget - avoid. 7 Series F01 (2009–12): pre-LCI to "
                      "LCI, cheap but old. 5 Series G30 2017–20 rarely fits. "
                      "X5 F15: best SUV engine, but no real facelift - only a "
-                     "G05-look kit. X3 F25 2011–14 / G01 2018–21. X1 left out. "
+                     "G05-look kit. X3 F25 2011–14 (xDrive30d = N57, the "
+                     "one to buy; xDrive20d = N47) / G01 2018–21. X1 left out. "
                      "A 2010–11 car is due for its 15-year RC renewal. Year "
                      "edges overlap generations (a 2013 5 Series can already be "
                      "the LCI): confirm the chassis by VIN. Telangana plates "
                      "only - other states cost ~₹4L to re-register."),
     "ml350": ("Base car for the GLE facelift conversion: an ML 350 CDI (3.0 V6 "
-              "diesel, 258 hp) with at least ₹5L of the ₹25–30L all-in cap left "
-              "for the work. Read nationally from CarWale, CarDekho and Cars24; "
+              "diesel, 258 hp). The all-in cap is now ₹15L (car + conversion), "
+              "so only the cheapest of these fit. Read nationally from CarWale, CarDekho and Cars24; "
               "Spinny, Big Boy Toyz and Royal Drive held none. Prefer a "
               "Hyderabad (TS) car - one from another state is re-registered "
               "here at Telangana's lifetime tax rate, which can sink the budget. "
@@ -383,6 +398,62 @@ def picks_html(cars):
 </div>"""
 
 
+ENGINE_RANKING = [
+    ("vrec", "✓ Best engine",
+     "BMW N57 3.0 inline-6 diesel + ZF 8-speed",
+     "530d F10 (2010–13), 525d F10 (2010–12 - confirm 2993 cc on the RC), "
+     "X3 xDrive30d F25 (2012–14), 730Ld F01, 5 GT 530d, X5 xDrive30d F15. "
+     "Six cylinders and the best gearbox of the lot; timing-chain failures are "
+     "rare and mostly 2008–10 builds. Main item is the EGR cooler - BMW India's "
+     "2018 recall covered 2011–16 diesels, so confirm it was done."),
+    ("vrec", "✓ Runner-up",
+     "Mercedes OM642 3.0 V6 diesel",
+     "ML 350 CDI, E 350 CDI, S 350 CDI. Durable engine; the bills are oil-cooler "
+     "seals (labour-heavy), the swirl-flap actuator and the 7G-Tronic gearbox "
+     "conductor plate. That gearbox is why it ranks below the BMW + ZF pairing."),
+    ("vavoid", "✗ Avoid",
+     "BMW N47 2.0 diesel, N63 V8, N46 petrol",
+     "N47: every 520d up to 2016, 320d up to 2015, X3 xDrive20d up to 2014, "
+     "X1 20d up to 2015 and 525d from 2013. Its timing chain is at the gearbox "
+     "end, so replacing it is a ₹1.2–2L engine-out job. N63 (750Li) burns oil "
+     "and eats turbos. N46 (old X1 18i / 320i) burns oil and wears its chain."),
+]
+
+
+def engine_panel(cars, key):
+    rank = "".join(
+        f'<li><span class="tag {cls}">{esc(tag)}</span><b>{esc(what)}</b>'
+        f'<span class="why">{esc(why)}</span></li>'
+        for cls, tag, what, why in ENGINE_RANKING)
+    live = sorted((c for c in cars if c.get("reg") == "ts"
+                   and engines.classify(c)["verdict"] == "rec"),
+                  key=lambda c: c["price"])
+    if live:
+        items = "".join(
+            f'<li><a href="{esc(c["url"])}" target="_blank" rel="noopener">'
+            f'{esc(c["year"])} {esc(c["name"])} {esc(c.get("variant", ""))}</a> · '
+            f'{sc.indian(c["km"])} km · {sc.rupees(c["price"])} · '
+            f'{esc(c.get("reg_label", ""))} · {esc(engines.classify(c)["code"])}</li>'
+            for c in live[:8])
+        live_html = f'<p class="warn"><b>Live now - Telangana plate + recommended engine:</b></p><ul class="live">{items}</ul>'
+    else:
+        live_html = ('<p class="warn"><b>Live now:</b> no Telangana-plated car with a '
+                     'recommended engine in this list right now.</p>')
+    return f"""<div class="picks">
+  <h3>Engine verdict</h3>
+  <p class="sub">Researched 18 Nov 2026. Every car below has an engine badge; hover
+    it or open "How this scored" for the reason. Use "Recommended engines" with
+    "Telangana only" to get the shortlist.</p>
+  <ol>{rank}</ol>
+  {live_html}
+  <p class="warn"><b>Before paying for any of these:</b> cold start (engine not run
+    that day) and listen for a rattle at the gearbox end; BMW or Mercedes dealer VIN
+    check for the EGR recall and service history; an ISTA or Xentry scan for EGR,
+    swirl-flap and DPF codes; check the crank pulley for wobble. The RC's cubic
+    capacity settles the engine: 2993 cc is the six, 1995 cc the four.</p>
+</div>"""
+
+
 # Anything scoring below this is priced badly enough not to be worth your time,
 # so it never reaches the page. It still appears in carhunt.log and state.json.
 MIN_SCORE = 40
@@ -418,6 +489,9 @@ def row_html(c):
     else:
         meta_html += ('<span class="plate unknown" title="Seller does not publish '
                       'the registration - ask before you go">plate ?</span>')
+    eng = engines.classify(c)
+    meta_html += (f'<span class="eng {eng["verdict"]}" title="{esc(eng["detail"])}">'
+                  f'{esc(eng["label"])} · {esc(eng["code"])}</span>')
     if c.get("where"):
         meta_html += f"<span>{esc(c['where'][:34])}</span>"
 
@@ -439,7 +513,7 @@ def row_html(c):
 
     label = "deal" if score is not None else "n/a"
     return f"""
-<article class="row" data-tier="{tier}" data-reg="{c.get('reg') or 'unknown'}" data-score="{score or 0}"
+<article class="row" data-tier="{tier}" data-reg="{c.get('reg') or 'unknown'}" data-eng="{eng['verdict']}" data-score="{score or 0}"
          data-price="{c['price']}" data-km="{c['km']}" data-year="{c['year'] or 0}">
   <div class="head">
     <div class="score"><b>{score if score is not None else '—'}</b><span>{label}</span></div>
@@ -453,6 +527,7 @@ def row_html(c):
   <details>
     <summary>How this scored · {esc(c['site'])}</summary>
     <div class="why">
+      <p class="engline"><b>Engine · {esc(eng['code'])}:</b> {esc(eng['detail'])}</p>
       <ul>{why_items}</ul>
       <p class="conf">Baseline confidence: {esc(c.get('confidence','—'))}</p>
       {also}
@@ -519,6 +594,8 @@ def render(groups, out=OUT):
         note = (f'<p class="note">{NOTES[key]}</p>' if key in NOTES else "")
         if key == "bmw":
             note = picks_html(cars) + note
+        if key in ("bmw_facelift", "ml350"):
+            note = engine_panel(cars, key) + note
         body.append(f"""
 <section class="group" id="{key}">
   <h2>{esc(HEADINGS.get(key, key))} · <span class="count">{len(cars)}</span> listings</h2>
@@ -569,6 +646,11 @@ def render(groups, out=OUT):
     <div class="seg" data-role="reg" role="group" aria-label="Filter by registration state">
       <button data-reg="all" aria-pressed="true">Any state</button>
       <button data-reg="ts" aria-pressed="false" title="Only cars with a Telangana plate (incl. pre-2014 Telangana AP codes) - no re-registration tax">Telangana only</button>
+    </div>
+    <div class="seg" data-role="eng" role="group" aria-label="Filter by engine verdict">
+      <button data-eng="all" aria-pressed="true">Any engine</button>
+      <button data-eng="noavoid" aria-pressed="false" title="Hide engines with a known expensive design fault (N47, N63, N46, 1.4 DCT)">Hide bad engines</button>
+      <button data-eng="rec" aria-pressed="false" title="Only engines researched as recommended">Recommended engines</button>
     </div>
     <span class="spacer"></span>
     <label class="sort" for="sort">Sort
